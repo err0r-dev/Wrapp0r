@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy workspace files
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
@@ -26,10 +26,19 @@ RUN pnpm --filter @wrapp0r/server build
 # Production stage
 FROM node:20-alpine
 
+# Add labels for container metadata
+LABEL org.opencontainers.image.title="Wrapp0r Server"
+LABEL org.opencontainers.image.description="API server for Wrapp0r - Spotify Wrapped for any data"
+LABEL org.opencontainers.image.version="0.1.0"
+
 WORKDIR /app
 
-# Install pnpm for production dependencies
-RUN npm install -g pnpm
+# Install pnpm for production dependencies and wget for health checks
+RUN corepack enable && corepack prepare pnpm@latest --activate && \
+    apk add --no-cache wget
+
+# Create non-root user for security
+RUN adduser -D -H -u 1001 -s /sbin/nologin appuser
 
 # Copy built files
 COPY --from=builder /app/packages/server/dist ./dist
@@ -38,9 +47,20 @@ COPY --from=builder /app/packages/shared/dist ./node_modules/@wrapp0r/shared/dis
 COPY --from=builder /app/packages/shared/package.json ./node_modules/@wrapp0r/shared/
 
 # Install production dependencies only
-RUN pnpm install --prod
+RUN pnpm install --prod && \
+    chown -R appuser:appuser /app
 
+# Environment variables
 ENV NODE_ENV=production
+ENV PORT=3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD wget -q --spider http://localhost:3001/api/health || exit 1
+
 EXPOSE 3001
+
+# Run as non-root user
+USER appuser
 
 CMD ["node", "dist/index.js"]

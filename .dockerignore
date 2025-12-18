@@ -1,0 +1,56 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+**/dist
+**/release
+**/build
+
+# Development files
+.git
+.gitignore
+.github
+.vscode
+.idea
+*.md
+!README.md
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+**/coverage
+**/__tests__
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.idea
+.vscode
+*.swp
+*.swo
+
+# Electron output
+packages/electron/release
+
+# Docker files (not needed in build context for this purpose)
+docker-compose*.yml
+Dockerfile*
+
+# Misc
+*.tgz
+.turbo

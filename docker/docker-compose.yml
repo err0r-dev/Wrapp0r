@@ -6,24 +6,28 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.web
     ports:
-      - "80:80"
+      - "${WEB_PORT:-80}:80"
     depends_on:
-      - server
+      server:
+        condition: service_healthy
     restart: unless-stopped
+    networks:
+      - wrapp0r-network
 
   server:
     build:
       context: ..
       dockerfile: docker/Dockerfile.server
     ports:
-      - "3001:3001"
+      - "${SERVER_PORT:-3001}:3001"
     environment:
       - NODE_ENV=production
       - PORT=3001
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+    networks:
+      - wrapp0r-network
+
+networks:
+  wrapp0r-network:
+    driver: bridge
