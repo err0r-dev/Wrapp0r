@@ -1,7 +1,20 @@
 import { useState, useCallback } from 'react';
-import { Upload, FileSpreadsheet, X, CheckCircle2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, X, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+
+// Supported file extensions
+const SUPPORTED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
+const ACCEPTED_MIME_TYPES = '.xlsx,.xls,.csv,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+function isValidFile(fileName: string): boolean {
+  const lowerName = fileName.toLowerCase();
+  return SUPPORTED_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+}
+
+function getFileIcon(fileName: string) {
+  return fileName.toLowerCase().endsWith('.csv') ? FileText : FileSpreadsheet;
+}
 
 interface ParsedFile {
   name: string;
@@ -54,7 +67,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
         totalRows,
       });
     } catch {
-      setError('Failed to parse file. Please ensure it\'s a valid Excel file.');
+      setError('Failed to parse file. Please ensure it\'s a valid Excel or CSV file.');
     } finally {
       setIsLoading(false);
     }
@@ -66,10 +79,10 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
       setIsDragging(false);
 
       const file = e.dataTransfer.files[0];
-      if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+      if (file && isValidFile(file.name)) {
         parseFile(file);
       } else {
-        setError('Please upload an Excel file (.xlsx or .xls)');
+        setError('Please upload an Excel or CSV file (.xlsx, .xls, or .csv)');
       }
     },
     [parseFile]
@@ -91,14 +104,19 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
   };
 
   if (selectedFile) {
+    const FileIcon = getFileIcon(selectedFile.name);
+    const isCSV = selectedFile.name.toLowerCase().endsWith('.csv');
+
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-3 rounded-lg border border-primary/50 bg-primary/5 p-3">
-          <CheckCircle2 className="h-5 w-5 text-primary" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <FileIcon className="h-5 w-5 text-primary" />
+          </div>
           <div className="flex-1 min-w-0">
             <p className="truncate font-medium">{selectedFile.name}</p>
             <p className="text-xs text-muted-foreground">
-              {selectedFile.sheets.length} sheet(s) · {selectedFile.totalRows.toLocaleString()} rows
+              {isCSV ? '' : `${selectedFile.sheets.length} sheet(s) · `}{selectedFile.totalRows.toLocaleString()} rows
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={handleClear}>
@@ -106,17 +124,17 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
           </Button>
         </div>
 
-        {/* Sheet preview */}
+        {/* Sheet/Column preview */}
         <div className="space-y-2">
           {selectedFile.sheets.slice(0, 3).map((sheet) => (
             <div
               key={sheet.name}
               className="rounded border bg-muted/50 p-2 text-xs"
             >
-              <p className="font-medium">{sheet.name}</p>
-              <p className="text-muted-foreground">
-                {sheet.rowCount} rows · Columns: {sheet.headers.slice(0, 4).join(', ')}
-                {sheet.headers.length > 4 && ` +${sheet.headers.length - 4} more`}
+              {!isCSV && <p className="font-medium">{sheet.name}</p>}
+              <p className={isCSV ? 'font-medium' : 'text-muted-foreground'}>
+                {isCSV ? 'Columns: ' : ''}{sheet.headers.slice(0, 5).join(', ')}
+                {sheet.headers.length > 5 && ` +${sheet.headers.length - 5} more`}
               </p>
             </div>
           ))}
@@ -148,7 +166,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
     >
       <input
         type="file"
-        accept=".xlsx,.xls"
+        accept={ACCEPTED_MIME_TYPES}
         onChange={handleFileInput}
         className="absolute inset-0 cursor-pointer opacity-0"
         disabled={isLoading}
@@ -171,7 +189,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
           <p className="text-sm font-medium">
             {isDragging ? 'Drop your file here' : 'Drop file or click to upload'}
           </p>
-          <p className="text-xs text-muted-foreground">.xlsx or .xls</p>
+          <p className="text-xs text-muted-foreground">.xlsx, .xls, or .csv</p>
         </>
       )}
 
