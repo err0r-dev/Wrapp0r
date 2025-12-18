@@ -1,0 +1,223 @@
+import { motion } from 'framer-motion';
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
+import type { ChartSlide as ChartSlideType } from '@wrapp0r/shared';
+import { getAnimationVariants } from '@/lib/animation-variants';
+
+interface ChartSlideProps {
+  slide: ChartSlideType;
+}
+
+const DEFAULT_COLORS = [
+  '#8884d8',
+  '#82ca9d',
+  '#ffc658',
+  '#ff7300',
+  '#00C49F',
+  '#FFBB28',
+  '#FF8042',
+  '#0088FE',
+];
+
+export function ChartSlide({ slide }: ChartSlideProps) {
+  const variants = getAnimationVariants(slide.animation);
+  const { title, chartType, data, showLegend } = slide.content;
+
+  // Prepare data with colors
+  const chartData = data.map((item, index) => ({
+    ...item,
+    color: item.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length],
+  }));
+
+  const renderChart = () => {
+    switch (chartType) {
+      case 'bar':
+        return (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+              <XAxis
+                dataKey="label"
+                tick={{ fill: 'currentColor', opacity: 0.7 }}
+                angle={-45}
+                textAnchor="end"
+                interval={0}
+                height={80}
+              />
+              <YAxis tick={{ fill: 'currentColor', opacity: 0.7 }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'white',
+                }}
+              />
+              {showLegend && <Legend />}
+              <Bar
+                dataKey="value"
+                animationDuration={1500}
+                animationBegin={300}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        );
+
+      case 'line':
+        return (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+              <XAxis
+                dataKey="label"
+                tick={{ fill: 'currentColor', opacity: 0.7 }}
+                angle={-45}
+                textAnchor="end"
+                interval={0}
+                height={80}
+              />
+              <YAxis tick={{ fill: 'currentColor', opacity: 0.7 }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'white',
+                }}
+              />
+              {showLegend && <Legend />}
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={chartData[0]?.color || DEFAULT_COLORS[0]}
+                strokeWidth={3}
+                dot={{ fill: chartData[0]?.color || DEFAULT_COLORS[0], r: 6 }}
+                animationDuration={1500}
+                animationBegin={300}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        );
+
+      case 'area':
+        return (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+              <XAxis
+                dataKey="label"
+                tick={{ fill: 'currentColor', opacity: 0.7 }}
+                angle={-45}
+                textAnchor="end"
+                interval={0}
+                height={80}
+              />
+              <YAxis tick={{ fill: 'currentColor', opacity: 0.7 }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'white',
+                }}
+              />
+              {showLegend && <Legend />}
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke={chartData[0]?.color || DEFAULT_COLORS[0]}
+                fill={chartData[0]?.color || DEFAULT_COLORS[0]}
+                fillOpacity={0.3}
+                animationDuration={1500}
+                animationBegin={300}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        );
+
+      case 'pie':
+      case 'donut':
+        return (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                innerRadius={chartType === 'donut' ? '50%' : 0}
+                outerRadius="80%"
+                paddingAngle={2}
+                dataKey="value"
+                nameKey="label"
+                animationDuration={1500}
+                animationBegin={300}
+                label={({ name, percent }) =>
+                  `${name}: ${(percent * 100).toFixed(0)}%`
+                }
+                labelLine={{ stroke: 'currentColor', opacity: 0.5 }}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'white',
+                }}
+              />
+              {showLegend && <Legend />}
+            </PieChart>
+          </ResponsiveContainer>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <motion.div
+      className="flex h-full flex-col items-center justify-center px-4 md:px-8"
+      variants={variants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    >
+      <motion.h2
+        className="mb-6 text-center text-2xl font-bold md:text-4xl"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+      >
+        {title}
+      </motion.h2>
+
+      <motion.div
+        className="h-[50vh] w-full max-w-4xl md:h-[60vh]"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
+      >
+        {renderChart()}
+      </motion.div>
+    </motion.div>
+  );
+}
