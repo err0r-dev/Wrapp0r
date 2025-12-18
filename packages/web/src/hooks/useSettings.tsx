@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from 'react';
 import type { StoredSettings, OpenAIModel, DataCategory } from '@wrapp0r/shared';
 
 const STORAGE_KEY = 'wrapp0r-settings';
@@ -10,7 +10,20 @@ const DEFAULT_SETTINGS: StoredSettings = {
   darkMode: false,
 };
 
-export function useSettings() {
+interface SettingsContextValue {
+  settings: StoredSettings;
+  isLoaded: boolean;
+  hasApiKey: boolean;
+  setApiKey: (apiKey: string | undefined) => void;
+  setModel: (model: OpenAIModel) => void;
+  setPreferredCategory: (category: DataCategory | undefined) => void;
+  clearSettings: () => void;
+  saveSettings: (newSettings: Partial<StoredSettings>) => void;
+}
+
+const SettingsContext = createContext<SettingsContextValue | null>(null);
+
+export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<StoredSettings>(DEFAULT_SETTINGS);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -64,14 +77,28 @@ export function useSettings() {
 
   const hasApiKey = Boolean(settings.apiKey);
 
-  return {
-    settings,
-    isLoaded,
-    hasApiKey,
-    setApiKey,
-    setModel,
-    setPreferredCategory,
-    clearSettings,
-    saveSettings,
-  };
+  return (
+    <SettingsContext.Provider
+      value={{
+        settings,
+        isLoaded,
+        hasApiKey,
+        setApiKey,
+        setModel,
+        setPreferredCategory,
+        clearSettings,
+        saveSettings,
+      }}
+    >
+      {children}
+    </SettingsContext.Provider>
+  );
+}
+
+export function useSettings() {
+  const context = useContext(SettingsContext);
+  if (!context) {
+    throw new Error('useSettings must be used within a SettingsProvider');
+  }
+  return context;
 }

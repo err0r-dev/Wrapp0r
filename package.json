@@ -10,6 +10,7 @@
     "clean": "turbo clean && rm -rf node_modules",
     "dev:web": "turbo dev --filter=@wrapp0r/web",
     "dev:server": "turbo dev --filter=@wrapp0r/server",
+    "dev:webapp": "turbo dev --filter=@wrapp0r/web --filter=@wrapp0r/server",
     "build:web": "turbo build --filter=@wrapp0r/web",
     "build:server": "turbo build --filter=@wrapp0r/server",
     "build:electron": "turbo build --filter=@wrapp0r/electron"

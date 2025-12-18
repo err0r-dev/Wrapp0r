@@ -1,6 +1,6 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 import type { ComparisonSlide as ComparisonSlideType } from '@wrapp0r/shared';
-import { getIconByName } from '@/lib/icons';
+import { getIconByName } from '../../lib/icons';
 
 interface ComparisonSlideProps {
   slide: ComparisonSlideType;

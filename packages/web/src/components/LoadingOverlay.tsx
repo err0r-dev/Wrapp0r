@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Sparkles, Wand2, BarChart3, Palette, Music } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -56,11 +57,11 @@ export function LoadingOverlay({
   const config = stageConfig[stage];
   const Icon = config.icon;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -189,6 +190,7 @@ export function LoadingOverlay({
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

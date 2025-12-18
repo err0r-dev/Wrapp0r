@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "pnpm bundle:remotion && tsc -b && vite build",
+    "bundle:remotion": "remotion bundle src/remotion/Root.tsx --out-dir ../server/remotion-bundle --public-dir public",
     "preview": "vite preview",
     "lint": "eslint ."
   },

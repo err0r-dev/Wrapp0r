@@ -3,10 +3,13 @@ import { motion } from 'framer-motion';
 import { Upload, Sparkles, ArrowRight, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettings, useWrappedGeneration } from '@/hooks';
 import { FileDropzone } from '@/components/upload/FileDropzone';
 import { CategorySelect } from '@/components/upload/CategorySelect';
-import type { DataCategory } from '@wrapp0r/shared';
+import { LoadingOverlay } from '@/components/LoadingOverlay';
+import { WrappedViewer } from '@/components/wrapped/WrappedViewer';
+import { ErrorMessage } from '@/components/ErrorMessage';
+import type { DataCategory, WrappedExperience } from '@wrapp0r/shared';
 
 interface ParsedFile {
   name: string;
@@ -19,20 +22,56 @@ interface ParsedFile {
 }
 
 export function HomePage() {
-  const { hasApiKey } = useSettings();
+  const { hasApiKey, settings } = useSettings();
   const [file, setFile] = useState<ParsedFile | null>(null);
+  const [fileData, setFileData] = useState<ArrayBuffer | null>(null);
   const [category, setCategory] = useState<DataCategory | null>(null);
   const [customDescription, setCustomDescription] = useState('');
+  const [wrappedResult, setWrappedResult] = useState<WrappedExperience | null>(null);
 
-  const canGenerate = hasApiKey && file && category;
+  const {
+    isGenerating,
+    progress,
+    error,
+    generate,
+    reset,
+    clearError,
+  } = useWrappedGeneration({
+    apiKey: settings.apiKey || '',
+    model: settings.model,
+  });
 
-  const handleFileSelect = (parsedFile: ParsedFile) => {
+  const canGenerate = hasApiKey && file && fileData && category;
+
+  const handleFileSelect = (parsedFile: ParsedFile | null, data: ArrayBuffer | null) => {
     setFile(parsedFile);
+    setFileData(data);
   };
 
-  const handleGenerate = () => {
-    // TODO: Implement generation
-    console.log('Generate wrapped', { file, category, customDescription });
+  const handleGenerate = async () => {
+    if (!file || !fileData || !category) return;
+
+    try {
+      const result = await generate({
+        file,
+        fileData,
+        category,
+        customDescription: customDescription || undefined,
+      });
+      setWrappedResult(result);
+    } catch {
+      // Error is handled by the hook and stored in state
+    }
+  };
+
+  const handleCloseViewer = () => {
+    setWrappedResult(null);
+    reset();
+  };
+
+  const handleRetry = () => {
+    clearError();
+    handleGenerate();
   };
 
   return (
@@ -92,7 +131,7 @@ export function HomePage() {
               <CardTitle className="text-lg">Upload Data</CardTitle>
             </div>
             <CardDescription>
-              Upload your Excel file (.xlsx, .xls)
+              Upload your Excel or CSV file
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -208,6 +247,34 @@ export function HomePage() {
           </p>
         </div>
       </motion.div>
+
+      {/* Error message */}
+      {error && (
+        <ErrorMessage
+          error={error}
+          onDismiss={clearError}
+          onRetry={handleRetry}
+          variant="toast"
+        />
+      )}
+
+      {/* Loading overlay */}
+      <LoadingOverlay
+        isVisible={isGenerating}
+        stage={progress?.stage === 'complete' ? 'finalizing' : progress?.stage}
+        progress={progress?.progress ?? 0}
+        message={progress?.message}
+      />
+
+      {/* Wrapped viewer */}
+      {wrappedResult && (
+        <WrappedViewer
+          wrapped={wrappedResult}
+          onClose={handleCloseViewer}
+          enableAudio={true}
+          enableVideoExport={true}
+        />
+      )}
     </div>
   );
 }

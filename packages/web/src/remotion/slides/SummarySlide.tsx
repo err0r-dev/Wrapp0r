@@ -1,6 +1,6 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 import type { SummarySlide as SummarySlideType } from '@wrapp0r/shared';
-import { getIconByName } from '@/lib/icons';
+import { getIconByName } from '../../lib/icons';
 
 interface SummarySlideProps {
   slide: SummarySlideType;

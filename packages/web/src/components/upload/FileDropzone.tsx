@@ -27,7 +27,7 @@ interface ParsedFile {
 }
 
 interface FileDropzoneProps {
-  onFileSelect: (file: ParsedFile) => void;
+  onFileSelect: (file: ParsedFile | null, fileData: ArrayBuffer | null) => void;
   selectedFile: ParsedFile | null;
 }
 
@@ -65,7 +65,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
         name: file.name,
         sheets,
         totalRows,
-      });
+      }, arrayBuffer);
     } catch {
       setError('Failed to parse file. Please ensure it\'s a valid Excel or CSV file.');
     } finally {
@@ -99,7 +99,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
   );
 
   const handleClear = () => {
-    onFileSelect(null as unknown as ParsedFile);
+    onFileSelect(null, null);
     setError(null);
   };
 

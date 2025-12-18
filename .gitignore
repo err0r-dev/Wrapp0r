@@ -64,9 +64,15 @@ docker-compose.override.yml
 tmp/
 temp/
 
+# Puppeteer/Chrome
+.local-chromium/
+.local-browsers/
+
 # Remotion (video export)
 .remotion/
 out.mp4
+remotion-bundle/
+*.mp4
 
 # Audio files (keep in git-lfs or add individually)
 # packages/web/src/assets/audio/*.mp3

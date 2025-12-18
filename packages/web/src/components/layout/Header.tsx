@@ -1,20 +1,14 @@
-import { Settings, Moon, Sun, Monitor } from 'lucide-react';
+import { Settings, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from './ThemeProvider';
 import { useState } from 'react';
 import { SettingsModal } from '@/components/SettingsModal';
 
 export function Header() {
-  const { theme, setTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const cycleTheme = () => {
-    if (theme === 'light') setTheme('dark');
-    else if (theme === 'dark') setTheme('system');
-    else setTheme('light');
-  };
-
-  const ThemeIcon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;
+  const ThemeIcon = theme === 'light' ? Sun : Moon;
 
   return (
     <>
@@ -31,8 +25,8 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={cycleTheme}
-              title={`Current: ${theme}. Click to change.`}
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >
               <ThemeIcon className="h-5 w-5" />
               <span className="sr-only">Toggle theme</span>

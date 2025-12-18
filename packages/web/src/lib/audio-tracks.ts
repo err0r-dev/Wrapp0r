@@ -8,6 +8,10 @@ export interface AudioTrack {
   duration?: number; // in seconds
 }
 
+// Audio is currently disabled - no audio files bundled
+// To enable audio, add MP3 files to public/audio/ directory
+export const AUDIO_ENABLED = false;
+
 // Map music moods to their corresponding audio tracks
 // These are placeholder paths - replace with actual royalty-free audio files
 // Recommended sources:

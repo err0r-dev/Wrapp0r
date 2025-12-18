@@ -1,6 +1,6 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 import type { StatSlide as StatSlideType } from '@wrapp0r/shared';
-import { getIconByName } from '@/lib/icons';
+import { getIconByName } from '../../lib/icons';
 import { useCounterValue } from '../animations';
 
 interface StatSlideProps {
