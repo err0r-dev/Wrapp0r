@@ -1,0 +1,46 @@
+# Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy workspace files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY turbo.json tsconfig.base.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/server/package.json ./packages/server/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY packages/shared ./packages/shared
+COPY packages/server ./packages/server
+
+# Build
+RUN pnpm --filter @wrapp0r/shared build
+RUN pnpm --filter @wrapp0r/server build
+
+# Production stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install pnpm for production dependencies
+RUN npm install -g pnpm
+
+# Copy built files
+COPY --from=builder /app/packages/server/dist ./dist
+COPY --from=builder /app/packages/server/package.json ./
+COPY --from=builder /app/packages/shared/dist ./node_modules/@wrapp0r/shared/dist
+COPY --from=builder /app/packages/shared/package.json ./node_modules/@wrapp0r/shared/
+
+# Install production dependencies only
+RUN pnpm install --prod
+
+ENV NODE_ENV=production
+EXPOSE 3001
+
+CMD ["node", "dist/index.js"]
