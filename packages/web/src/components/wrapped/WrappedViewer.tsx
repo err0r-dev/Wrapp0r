@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Video } from 'lucide-react';
 import type { WrappedExperience } from '@wrapp0r/shared';
 import { SlideRenderer } from './SlideRenderer';
 import { useWrappedNavigation } from '@/hooks/useWrappedNavigation';
@@ -8,22 +8,24 @@ import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AudioPlayer } from '@/components/AudioPlayer';
+import { VideoExportModal } from '@/components/VideoExportModal';
 
 interface WrappedViewerProps {
   wrapped: WrappedExperience;
   onClose?: () => void;
-  onExport?: () => void;
   autoAdvance?: boolean;
   enableAudio?: boolean;
+  enableVideoExport?: boolean;
 }
 
 export function WrappedViewer({
   wrapped,
   onClose,
-  onExport,
   autoAdvance = false,
   enableAudio = true,
+  enableVideoExport = true,
 }: WrappedViewerProps) {
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const {
     currentIndex,
     currentSlide,
@@ -99,15 +101,15 @@ export function WrappedViewer({
         </div>
 
         <div className="flex items-center gap-2">
-          {onExport && isLast && (
+          {enableVideoExport && isLast && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={onExport}
+              onClick={() => setIsExportModalOpen(true)}
               className="text-white hover:bg-white/10"
             >
-              <Download className="mr-2 h-4 w-4" />
-              Export
+              <Video className="mr-2 h-4 w-4" />
+              Export Video
             </Button>
           )}
           {onClose && (
@@ -183,6 +185,15 @@ export function WrappedViewer({
         className="absolute inset-y-0 right-0 z-10 w-1/4 cursor-pointer md:hidden"
         onClick={goNext}
       />
+
+      {/* Video Export Modal */}
+      {enableVideoExport && (
+        <VideoExportModal
+          wrapped={wrapped}
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
