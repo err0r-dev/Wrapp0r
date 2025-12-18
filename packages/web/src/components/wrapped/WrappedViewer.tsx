@@ -5,6 +5,7 @@ import type { WrappedExperience } from '@wrapp0r/shared';
 import { SlideRenderer } from './SlideRenderer';
 import { useWrappedNavigation } from '@/hooks/useWrappedNavigation';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AudioPlayer } from '@/components/AudioPlayer';
@@ -48,6 +49,14 @@ export function WrappedViewer({
     volume: 0.4,
   });
 
+  // Swipe navigation for mobile
+  const { handlers: swipeHandlers, swipeState } = useSwipeNavigation({
+    onSwipeLeft: () => !isLast && goNext(),
+    onSwipeRight: () => !isFirst && goPrev(),
+    threshold: 50,
+    enabled: true,
+  });
+
   // Start playing when the viewer opens
   useEffect(() => {
     if (enableAudio && audio.canAutoplay) {
@@ -68,8 +77,14 @@ export function WrappedViewer({
     }
   };
 
+  // Calculate swipe offset for visual feedback
+  const swipeOffset = swipeState.isSwiping ? swipeState.deltaX * 0.3 : 0;
+
   return (
-    <div className="fixed inset-0 z-50 bg-black">
+    <div
+      className="fixed inset-0 z-50 bg-black touch-pan-y"
+      {...swipeHandlers}
+    >
       {/* Progress bar at top */}
       <div className="absolute left-0 right-0 top-0 z-20 px-4 pt-4">
         <div className="mx-auto max-w-3xl">
@@ -125,13 +140,47 @@ export function WrappedViewer({
         </div>
       </div>
 
-      {/* Slide content */}
-      <AnimatePresence mode="wait">
-        <SlideRenderer
-          key={currentSlide.id}
-          slide={currentSlide}
-          theme={wrapped.theme}
-        />
+      {/* Slide content with swipe feedback */}
+      <motion.div
+        className="h-full w-full"
+        animate={{ x: swipeOffset }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      >
+        <AnimatePresence mode="wait">
+          <SlideRenderer
+            key={currentSlide.id}
+            slide={currentSlide}
+            theme={wrapped.theme}
+          />
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Swipe hint indicators */}
+      <AnimatePresence>
+        {swipeState.isSwiping && (
+          <>
+            {swipeState.direction === 'right' && !isFirst && (
+              <motion.div
+                className="absolute left-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/20 p-3"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: Math.min(Math.abs(swipeState.deltaX) / 100, 1), scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+              >
+                <ChevronLeft className="h-6 w-6 text-white" />
+              </motion.div>
+            )}
+            {swipeState.direction === 'left' && !isLast && (
+              <motion.div
+                className="absolute right-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/20 p-3"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: Math.min(Math.abs(swipeState.deltaX) / 100, 1), scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+              >
+                <ChevronRight className="h-6 w-6 text-white" />
+              </motion.div>
+            )}
+          </>
+        )}
       </AnimatePresence>
 
       {/* Navigation arrows */}
@@ -176,15 +225,24 @@ export function WrappedViewer({
         ))}
       </div>
 
-      {/* Touch areas for mobile */}
-      <div
-        className="absolute inset-y-0 left-0 z-10 w-1/4 cursor-pointer md:hidden"
-        onClick={goPrev}
-      />
-      <div
-        className="absolute inset-y-0 right-0 z-10 w-1/4 cursor-pointer md:hidden"
-        onClick={goNext}
-      />
+      {/* Touch hint on first load (mobile only) */}
+      {currentIndex === 0 && (
+        <motion.div
+          className="pointer-events-none absolute bottom-20 left-0 right-0 z-20 flex justify-center md:hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ delay: 2 }}
+        >
+          <motion.div
+            className="rounded-full bg-white/10 px-4 py-2 text-xs text-white/70 backdrop-blur-sm"
+            animate={{ x: [-5, 5, -5] }}
+            transition={{ duration: 2, repeat: 3, ease: 'easeInOut' }}
+          >
+            Swipe to navigate
+          </motion.div>
+        </motion.div>
+      )}
 
       {/* Video Export Modal */}
       {enableVideoExport && (
