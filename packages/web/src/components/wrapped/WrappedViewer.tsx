@@ -1,27 +1,28 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Download, Volume2, VolumeX } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Download } from 'lucide-react';
 import type { WrappedExperience } from '@wrapp0r/shared';
 import { SlideRenderer } from './SlideRenderer';
 import { useWrappedNavigation } from '@/hooks/useWrappedNavigation';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { AudioPlayer } from '@/components/AudioPlayer';
 
 interface WrappedViewerProps {
   wrapped: WrappedExperience;
   onClose?: () => void;
   onExport?: () => void;
-  isMuted?: boolean;
-  onToggleMute?: () => void;
   autoAdvance?: boolean;
+  enableAudio?: boolean;
 }
 
 export function WrappedViewer({
   wrapped,
   onClose,
   onExport,
-  isMuted = false,
-  onToggleMute,
   autoAdvance = false,
+  enableAudio = true,
 }: WrappedViewerProps) {
   const {
     currentIndex,
@@ -38,6 +39,33 @@ export function WrappedViewer({
     autoAdvance,
   });
 
+  const audio = useAudioPlayer({
+    mood: wrapped.musicMood,
+    autoPlay: enableAudio,
+    loop: true,
+    volume: 0.4,
+  });
+
+  // Start playing when the viewer opens
+  useEffect(() => {
+    if (enableAudio && audio.canAutoplay) {
+      audio.play();
+      audio.fadeIn(1500);
+    }
+  }, [enableAudio]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cleanup: fade out audio when closing
+  const handleClose = () => {
+    if (audio.isPlaying) {
+      audio.fadeOut(500);
+      setTimeout(() => {
+        onClose?.();
+      }, 500);
+    } else {
+      onClose?.();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black">
       {/* Progress bar at top */}
@@ -48,21 +76,21 @@ export function WrappedViewer({
       </div>
 
       {/* Top controls */}
-      <div className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between p-4">
+      <div className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between p-4 pt-8">
         <div className="flex items-center gap-2">
-          {onToggleMute && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleMute}
-              className="text-white hover:bg-white/10"
-            >
-              {isMuted ? (
-                <VolumeX className="h-5 w-5" />
-              ) : (
-                <Volume2 className="h-5 w-5" />
-              )}
-            </Button>
+          {enableAudio && (
+            <AudioPlayer
+              isPlaying={audio.isPlaying}
+              isMuted={audio.isMuted}
+              isLoading={audio.isLoading}
+              hasError={audio.hasError}
+              canAutoplay={audio.canAutoplay}
+              currentTrack={audio.currentTrack}
+              onToggleMute={audio.toggleMute}
+              onPlay={audio.play}
+              variant="pill"
+              className="text-white"
+            />
           )}
         </div>
 
@@ -86,7 +114,7 @@ export function WrappedViewer({
             <Button
               variant="ghost"
               size="icon"
-              onClick={onClose}
+              onClick={handleClose}
               className="text-white hover:bg-white/10"
             >
               <X className="h-5 w-5" />
