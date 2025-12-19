@@ -1,5 +1,6 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 import type { ListSlide as ListSlideType } from '@wrapp0r/shared';
+import { useEasedProgress, useStaggeredProgress } from '../animations';
 
 interface ListSlideProps {
   slide: ListSlideType;
@@ -11,26 +12,18 @@ export function ListSlide({ slide }: ListSlideProps) {
   const { title, subtitle, items, layout } = slide.content;
 
   // Title animation
-  const titleOpacity = interpolate(
-    frame,
-    [0, fps * 0.3],
-    [0, 1],
-    { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-  );
-  const titleY = interpolate(
-    frame,
-    [0, fps * 0.3],
-    [-20, 0],
-    { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-  );
+  const titleProgress = useEasedProgress({ delay: 0, duration: 0.3, easing: 'easeOut' });
 
   // Subtitle animation
-  const subtitleOpacity = interpolate(
-    frame,
-    [fps * 0.2, fps * 0.5],
-    [0, 0.7],
-    { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-  );
+  const subtitleProgress = useEasedProgress({ delay: 0.15, duration: 0.3, easing: 'easeOut' });
+
+  // Staggered item animations
+  const itemProgresses = useStaggeredProgress(items.length, {
+    staggerDelay: 0.1,
+    startDelay: 0.4,
+    duration: 0.35,
+    easing: 'easeOutBack',
+  });
 
   // Get layout classes
   const getLayoutClasses = () => {
@@ -50,8 +43,8 @@ export function ListSlide({ slide }: ListSlideProps) {
       <h2
         className="mb-2 text-3xl font-bold md:text-4xl"
         style={{
-          opacity: titleOpacity,
-          transform: `translateY(${titleY}px)`,
+          opacity: titleProgress,
+          transform: `translateY(${interpolate(titleProgress, [0, 1], [-20, 0])}px)`,
         }}
       >
         {title}
@@ -60,7 +53,7 @@ export function ListSlide({ slide }: ListSlideProps) {
       {subtitle && (
         <p
           className="mb-8 text-lg md:text-xl"
-          style={{ opacity: subtitleOpacity }}
+          style={{ opacity: subtitleProgress * 0.7 }}
         >
           {subtitle}
         </p>
@@ -68,34 +61,18 @@ export function ListSlide({ slide }: ListSlideProps) {
 
       <div className={`w-full max-w-2xl ${getLayoutClasses()}`}>
         {items.map((item, index) => {
-          const itemDelay = fps * 0.4 + index * (fps * 0.15);
-          const itemOpacity = interpolate(
-            frame,
-            [itemDelay, itemDelay + fps * 0.3],
-            [0, 1],
-            { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-          );
-          const itemY = interpolate(
-            frame,
-            [itemDelay, itemDelay + fps * 0.3],
-            [20, 0],
-            { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-          );
-          const itemScale = interpolate(
-            frame,
-            [itemDelay, itemDelay + fps * 0.3],
-            [0.9, 1],
-            { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-          );
+          const progress = itemProgresses[index];
+          const translateY = interpolate(progress, [0, 1], [20, 0]);
+          const scale = interpolate(progress, [0, 1], [0.9, 1]);
 
           if (layout === 'ranked') {
             return (
               <div
                 key={index}
-                className="flex items-center gap-4 rounded-lg bg-white/10 p-4"
+                className="flex items-center gap-4 rounded-lg bg-white/10 p-4 backdrop-blur-sm"
                 style={{
-                  opacity: itemOpacity,
-                  transform: `translateY(${itemY}px) scale(${itemScale})`,
+                  opacity: progress,
+                  transform: `translateY(${translateY}px) scale(${scale})`,
                 }}
               >
                 {item.rank && (
@@ -116,10 +93,10 @@ export function ListSlide({ slide }: ListSlideProps) {
             return (
               <div
                 key={index}
-                className="flex flex-col items-center justify-center rounded-lg bg-white/10 p-4 text-center"
+                className="flex flex-col items-center justify-center rounded-lg bg-white/10 p-4 text-center backdrop-blur-sm"
                 style={{
-                  opacity: itemOpacity,
-                  transform: `scale(${itemScale})`,
+                  opacity: progress,
+                  transform: `scale(${scale})`,
                 }}
               >
                 {item.emoji && <span className="mb-2 text-3xl">{item.emoji}</span>}
@@ -135,10 +112,10 @@ export function ListSlide({ slide }: ListSlideProps) {
           return (
             <div
               key={index}
-              className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2"
+              className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm"
               style={{
-                opacity: itemOpacity,
-                transform: `scale(${itemScale})`,
+                opacity: progress,
+                transform: `scale(${scale})`,
               }}
             >
               {item.emoji && <span className="text-xl">{item.emoji}</span>}

@@ -5,7 +5,7 @@ Transform any Excel or CSV data into beautiful "Spotify Wrapped"-style video pre
 ## Features
 
 - **Universal Data Support**: Upload fitness logs, music history, finances, productivity data, or any structured spreadsheet
-- **AI-Powered Narratives**: OpenAI GPT-4o analyzes your data and generates personalized, engaging story slides
+- **AI-Powered Narratives**: OpenAI GPT-4o analyses your data and generates personalised, engaging story slides
 - **Animated Presentations**: Smooth Framer Motion animations with multiple slide types (stats, charts, lists, comparisons)
 - **Video Export**: Server-side rendering with Remotion generates downloadable MP4 videos
 - **Mood-Based Audio**: Background music matched to your data theme (energetic, chill, dramatic, etc.)
@@ -138,7 +138,7 @@ docker-compose up -d
 
 1. **Upload**: Drag and drop an Excel (.xlsx) or CSV file
 2. **Categorize**: Select the data type (fitness, music, finance, etc.) or let AI detect it
-3. **Generate**: AI analyzes your data and creates a personalized wrapped experience with 8-12 slides
+3. **Generate**: AI analyses your data and creates a personalised wrapped experience with 8-12 slides
 4. **Preview**: Navigate through animated slides with swipe gestures or keyboard
 5. **Export**: Download as an MP4 video to share
 

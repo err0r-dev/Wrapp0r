@@ -3,6 +3,7 @@ import cors from 'cors';
 import { generateRouter } from './routes/generate.js';
 import { healthRouter } from './routes/health.js';
 import { renderRouter } from './routes/render.js';
+import { musicRouter } from './routes/music.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 const app: Express = express();
@@ -21,6 +22,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use('/api', healthRouter);
 app.use('/api', generateRouter);
 app.use('/api', renderRouter);
+app.use('/api', musicRouter);
 
 // Error handling
 app.use(errorHandler);

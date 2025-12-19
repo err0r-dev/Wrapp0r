@@ -222,7 +222,7 @@ export function HomePage() {
           </div>
           <h3 className="font-semibold">AI-Powered</h3>
           <p className="text-sm text-muted-foreground">
-            GPT-4o analyzes your data and creates unique insights
+            GPT-4o analyses your data and creates unique insights
           </p>
         </div>
         <div className="text-center">

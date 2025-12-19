@@ -48,6 +48,14 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // Spotify brand colours
+        spotify: {
+          green: 'hsl(141 76% 48%)', // #1DB954
+          'green-bright': 'hsl(141 76% 55%)', // #1ED760 - accessible
+          black: 'hsl(0 8% 9%)', // #191414
+          dark: 'hsl(0 0% 7%)', // #121212
+          'light-grey': 'hsl(0 0% 70%)', // #B3B3B3
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

@@ -1,5 +1,7 @@
-import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig, spring } from 'remotion';
+import { Quote } from 'lucide-react';
 import type { QuoteSlide as QuoteSlideType } from '@wrapp0r/shared';
+import { useEasedProgress } from '../animations';
 
 interface QuoteSlideProps {
   slide: QuoteSlideType;
@@ -10,85 +12,66 @@ export function QuoteSlide({ slide }: QuoteSlideProps) {
   const { fps } = useVideoConfig();
   const { quote, attribution } = slide.content;
 
-  // Quote mark animation
-  const quoteMarkOpacity = interpolate(
-    frame,
-    [0, fps * 0.3],
-    [0, 0.2],
-    { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-  );
-  const quoteMarkScale = interpolate(
-    frame,
-    [0, fps * 0.5],
-    [0.5, 1],
-    { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-  );
+  // Quote icon animation with spring
+  const iconSpring = spring({
+    frame: Math.max(0, frame - fps * 0.2),
+    fps,
+    config: { damping: 12, stiffness: 150 },
+  });
 
   // Quote text animation
-  const quoteOpacity = interpolate(
-    frame,
-    [fps * 0.3, fps * 0.8],
-    [0, 1],
-    { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-  );
-  const quoteY = interpolate(
-    frame,
-    [fps * 0.3, fps * 0.8],
-    [30, 0],
-    { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-  );
+  const quoteProgress = useEasedProgress({ delay: 0.3, duration: 0.5, easing: 'easeOut' });
 
   // Attribution animation
-  const attrOpacity = interpolate(
-    frame,
-    [fps * 1, fps * 1.3],
-    [0, 0.6],
-    { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
-  );
+  const attrProgress = useEasedProgress({ delay: 0.7, duration: 0.4, easing: 'easeOut' });
 
   return (
-    <AbsoluteFill className="flex flex-col items-center justify-center px-8">
-      <div className="relative max-w-3xl text-center">
-        {/* Decorative quote marks */}
-        <span
-          className="absolute -left-8 -top-8 font-serif text-8xl md:-left-12 md:-top-12 md:text-9xl"
+    <AbsoluteFill className="flex flex-col items-center justify-center px-6 md:px-12">
+      <div className="relative max-w-3xl">
+        {/* Top-left Quote icon */}
+        <div
+          className="absolute -left-6 -top-6 md:-left-10 md:-top-10"
           style={{
-            opacity: quoteMarkOpacity,
-            transform: `scale(${quoteMarkScale})`,
+            opacity: iconSpring * 0.2,
+            transform: `scale(${iconSpring}) rotate(${interpolate(iconSpring, [0, 1], [-30, 0])}deg)`,
           }}
         >
-          "
-        </span>
+          <Quote className="h-12 w-12 md:h-20 md:w-20" />
+        </div>
 
         <blockquote
-          className="relative z-10 text-2xl font-medium italic leading-relaxed md:text-3xl lg:text-4xl"
+          className="relative z-10 text-center text-xl font-medium leading-relaxed md:text-3xl lg:text-4xl"
           style={{
-            opacity: quoteOpacity,
-            transform: `translateY(${quoteY}px)`,
+            opacity: quoteProgress,
+            transform: `translateY(${interpolate(quoteProgress, [0, 1], [20, 0])}px)`,
           }}
         >
-          {quote}
+          "{quote}"
         </blockquote>
 
-        <span
-          className="absolute -bottom-8 -right-8 font-serif text-8xl md:-bottom-12 md:-right-12 md:text-9xl"
+        {/* Bottom-right Quote icon (rotated) */}
+        <div
+          className="absolute -bottom-6 -right-6 md:-bottom-10 md:-right-10"
           style={{
-            opacity: quoteMarkOpacity,
-            transform: `scale(${quoteMarkScale}) rotate(180deg)`,
+            opacity: iconSpring * 0.2,
+            transform: `scale(${iconSpring}) rotate(${interpolate(iconSpring, [0, 1], [210, 180])}deg)`,
           }}
         >
-          "
-        </span>
-
-        {attribution && (
-          <p
-            className="mt-8 text-lg md:text-xl"
-            style={{ opacity: attrOpacity }}
-          >
-            — {attribution}
-          </p>
-        )}
+          <Quote className="h-12 w-12 md:h-20 md:w-20" />
+        </div>
       </div>
+
+      {attribution && (
+        <p
+          className="mt-8 text-sm font-medium uppercase tracking-wider md:mt-12 md:text-base"
+          style={{
+            opacity: attrProgress * 0.6,
+            transform: `translateY(${interpolate(attrProgress, [0, 1], [10, 0])}px)`,
+          }}
+        >
+          — {attribution}
+        </p>
+      )}
     </AbsoluteFill>
   );
 }

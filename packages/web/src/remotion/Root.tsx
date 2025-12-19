@@ -1,5 +1,6 @@
 import React from 'react';
 import { Composition, registerRoot } from 'remotion';
+import '../styles/globals.css';
 import { WrappedComposition, calculateTotalDuration } from './WrappedComposition';
 import type { WrappedExperience } from '@wrapp0r/shared';
 
@@ -43,8 +44,9 @@ const DEFAULT_DURATION_FRAMES = calculateTotalDuration(defaultWrapped, FPS);
 const WrappedCompositionWrapper: React.FC<{
   wrapped?: WrappedExperience;
   includeAudio?: boolean;
-}> = ({ wrapped = defaultWrapped, includeAudio = false }) => {
-  return <WrappedComposition wrapped={wrapped} includeAudio={includeAudio} />;
+  audioSrc?: string;
+}> = ({ wrapped = defaultWrapped, includeAudio = false, audioSrc }) => {
+  return <WrappedComposition wrapped={wrapped} includeAudio={includeAudio} audioSrc={audioSrc} />;
 };
 
 export const RemotionRoot: React.FC = () => {
@@ -60,6 +62,7 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={{
           wrapped: defaultWrapped,
           includeAudio: false,
+          audioSrc: undefined,
         }}
       />
     </>

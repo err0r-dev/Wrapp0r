@@ -70,16 +70,16 @@ export function StatSlide({ slide }: StatSlideProps) {
     { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
   );
 
-  // Comparison animation
+  // Comparison animation - appears shortly after the value (0.8s delay)
   const comparisonOpacity = interpolate(
     frame,
-    [fps * 2.5, fps * 3],
+    [fps * 0.8, fps * 1.1],
     [0, 1],
     { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
   );
   const comparisonY = interpolate(
     frame,
-    [fps * 2.5, fps * 3],
+    [fps * 0.8, fps * 1.1],
     [15, 0],
     { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' }
   );

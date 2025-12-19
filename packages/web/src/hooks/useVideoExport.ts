@@ -3,10 +3,15 @@ import type { WrappedExperience } from '@wrapp0r/shared';
 
 export type ExportStatus = 'idle' | 'rendering' | 'downloading' | 'complete' | 'error';
 
+export interface ExportOptions {
+  jamendoClientId?: string;
+  audioUrl?: string;
+}
+
 export interface UseVideoExportReturn {
   status: ExportStatus;
   error: string | null;
-  exportVideo: (wrapped: WrappedExperience) => Promise<void>;
+  exportVideo: (wrapped: WrappedExperience, options?: ExportOptions) => Promise<void>;
   reset: () => void;
 }
 
@@ -14,7 +19,7 @@ export function useVideoExport(): UseVideoExportReturn {
   const [status, setStatus] = useState<ExportStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  const exportVideo = useCallback(async (wrapped: WrappedExperience) => {
+  const exportVideo = useCallback(async (wrapped: WrappedExperience, options?: ExportOptions) => {
     setStatus('rendering');
     setError(null);
 
@@ -22,16 +27,25 @@ export function useVideoExport(): UseVideoExportReturn {
       const response = await fetch('/api/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wrapped }),
+        body: JSON.stringify({
+          wrapped,
+          jamendoClientId: options?.jamendoClientId,
+          audioUrl: options?.audioUrl,
+        }),
       });
 
       if (!response.ok) {
         let errorMessage = 'Render failed';
         try {
           const err = await response.json();
-          errorMessage = err.error || err.details || errorMessage;
+          console.error('Server render error:', err);
+          errorMessage = err.details || err.error || errorMessage;
+          if (err.stack) {
+            console.error('Server stack trace:', err.stack);
+          }
         } catch {
           // Response wasn't JSON
+          console.error('Non-JSON error response:', response.status, response.statusText);
         }
         throw new Error(errorMessage);
       }

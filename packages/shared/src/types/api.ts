@@ -22,8 +22,93 @@ export const DATA_CATEGORIES = [
 ] as const;
 
 // OpenAI model selection
-export const OpenAIModelSchema = z.enum(['gpt-4o', 'gpt-4o-mini']);
+export const OpenAIModelSchema = z.enum([
+  'gpt-4o',
+  'gpt-4o-mini',
+  'o1-pro',
+  'o1',
+  'o1-mini',
+]);
 export type OpenAIModel = z.infer<typeof OpenAIModelSchema>;
+
+// Model type classification
+export type ModelType = 'standard' | 'reasoning';
+
+// Model configuration metadata
+export interface ModelConfig {
+  type: ModelType;
+  supportsStreaming: boolean;
+  supportsTemperature: boolean;
+  supportsResponseFormat: boolean;
+  maxTokens: number;
+  displayName: string;
+  description: string;
+  tier: 'recommended' | 'budget' | 'standard' | 'advanced' | 'premium';
+  warning?: string;
+}
+
+export const MODEL_CONFIG: Record<OpenAIModel, ModelConfig> = {
+  'gpt-4o': {
+    type: 'standard',
+    supportsStreaming: true,
+    supportsTemperature: true,
+    supportsResponseFormat: true,
+    maxTokens: 4000,
+    displayName: 'GPT-4o',
+    description: 'Best balance of quality and speed',
+    tier: 'recommended',
+  },
+  'gpt-4o-mini': {
+    type: 'standard',
+    supportsStreaming: true,
+    supportsTemperature: true,
+    supportsResponseFormat: true,
+    maxTokens: 4000,
+    displayName: 'GPT-4o Mini',
+    description: 'Faster and cheaper',
+    tier: 'budget',
+  },
+  'o1-mini': {
+    type: 'reasoning',
+    supportsStreaming: false,
+    supportsTemperature: false,
+    supportsResponseFormat: false,
+    maxTokens: 16384,
+    displayName: 'o1-mini',
+    description: 'Fast reasoning model',
+    tier: 'standard',
+  },
+  'o1': {
+    type: 'reasoning',
+    supportsStreaming: false,
+    supportsTemperature: false,
+    supportsResponseFormat: false,
+    maxTokens: 32768,
+    displayName: 'o1',
+    description: 'Strong reasoning capabilities',
+    tier: 'advanced',
+  },
+  'o1-pro': {
+    type: 'reasoning',
+    supportsStreaming: false,
+    supportsTemperature: false,
+    supportsResponseFormat: false,
+    maxTokens: 32768,
+    displayName: 'o1-pro',
+    description: 'Most powerful reasoning - expensive & slow',
+    tier: 'premium',
+    warning: 'This model is significantly more expensive and slower. Use for complex analysis.',
+  },
+};
+
+// Helper functions
+export function isReasoningModel(model: OpenAIModel): boolean {
+  return MODEL_CONFIG[model].type === 'reasoning';
+}
+
+export function getModelConfig(model: OpenAIModel): ModelConfig {
+  return MODEL_CONFIG[model];
+}
 
 // Generate request schema
 export const GenerateRequestSchema = z.object({
@@ -62,6 +147,7 @@ export type SSEEvent = z.infer<typeof SSEEventSchema>;
 // Settings stored in localStorage
 export const StoredSettingsSchema = z.object({
   apiKey: z.string().optional(),
+  pixabayApiKey: z.string().optional(),
   model: OpenAIModelSchema.default('gpt-4o'),
   preferredCategory: DataCategorySchema.optional(),
   darkMode: z.boolean().default(false),

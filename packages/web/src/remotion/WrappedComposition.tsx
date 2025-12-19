@@ -1,4 +1,4 @@
-import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig, interpolate, Audio, staticFile } from 'remotion';
+import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig, interpolate, Audio } from 'remotion';
 import type { WrappedExperience, Slide, ColorTheme } from '@wrapp0r/shared';
 import {
   TitleSlide,
@@ -13,6 +13,7 @@ import {
 export interface WrappedCompositionProps {
   wrapped: WrappedExperience;
   includeAudio?: boolean;
+  audioSrc?: string;
 }
 
 // Get background style from slide and theme
@@ -53,37 +54,47 @@ function SlideRenderer({ slide, theme }: { slide: Slide; theme: ColorTheme }) {
   }
 }
 
-// Animated background decoration
+// Animated background decoration - matches web SlideRenderer decorations
 function BackgroundDecoration({ theme }: { theme: ColorTheme }) {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
-  // Slow rotating/floating circles
-  const rotation = (frame / fps) * 10; // 10 degrees per second
-  const float1 = Math.sin(frame / fps) * 20;
-  const float2 = Math.cos(frame / fps * 0.7) * 15;
+  // Slow floating animation matching web version
+  // Web uses: duration 8s (primary), 10s (secondary), 6s (accent)
+  const primaryOffset = {
+    x: Math.sin(frame / fps / 8 * 2 * Math.PI) * 30,
+    y: Math.sin(frame / fps / 8 * 2 * Math.PI + 0.5) * 20,
+  };
+  const secondaryOffset = {
+    x: Math.cos(frame / fps / 10 * 2 * Math.PI) * 20,
+    y: Math.cos(frame / fps / 10 * 2 * Math.PI + 0.5) * 30,
+  };
+  const accentScale = 1 + Math.sin(frame / fps / 6 * 2 * Math.PI) * 0.2;
 
   return (
     <>
+      {/* Primary blob - top left */}
       <div
         className="absolute -left-20 -top-20 h-64 w-64 rounded-full opacity-20 blur-3xl"
         style={{
           backgroundColor: theme.primary,
-          transform: `translate(${float1}px, ${float2}px) rotate(${rotation}deg)`,
+          transform: `translate(${primaryOffset.x}px, ${primaryOffset.y}px)`,
         }}
       />
+      {/* Secondary blob - bottom right - matches web h-96 and opacity-20 */}
       <div
-        className="absolute -bottom-20 -right-20 h-80 w-80 rounded-full opacity-15 blur-3xl"
+        className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full opacity-20 blur-3xl"
         style={{
           backgroundColor: theme.secondary,
-          transform: `translate(${-float2}px, ${-float1}px) rotate(${-rotation}deg)`,
+          transform: `translate(${secondaryOffset.x}px, ${secondaryOffset.y}px)`,
         }}
       />
+      {/* Accent blob - center - matches web blur-3xl */}
       <div
-        className="absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-10 blur-2xl"
+        className="absolute left-1/2 top-1/2 h-48 w-48 rounded-full opacity-10 blur-3xl"
         style={{
           backgroundColor: theme.accent,
-          transform: `translate(-50%, -50%) scale(${1 + Math.sin(frame / fps * 0.5) * 0.1})`,
+          transform: `translate(-50%, -50%) scale(${accentScale})`,
         }}
       />
     </>
@@ -113,7 +124,7 @@ function SlideTransition({ durationInFrames }: { durationInFrames: number }) {
   );
 }
 
-export function WrappedComposition({ wrapped, includeAudio = true }: WrappedCompositionProps) {
+export function WrappedComposition({ wrapped, includeAudio = true, audioSrc }: WrappedCompositionProps) {
   const { fps } = useVideoConfig();
 
   // Calculate frame positions for each slide
@@ -129,9 +140,6 @@ export function WrappedComposition({ wrapped, includeAudio = true }: WrappedComp
     currentFrame += frames;
     return start;
   });
-
-  // Get audio file path based on music mood
-  const audioSrc = `/audio/${wrapped.musicMood}.mp3`;
 
   return (
     <AbsoluteFill
@@ -165,9 +173,9 @@ export function WrappedComposition({ wrapped, includeAudio = true }: WrappedComp
       ))}
 
       {/* Audio track */}
-      {includeAudio && (
+      {includeAudio && audioSrc && (
         <Audio
-          src={staticFile(audioSrc)}
+          src={audioSrc}
           volume={(f) => {
             // Fade in over first 2 seconds
             const fadeIn = interpolate(f, [0, fps * 2], [0, 0.4], {

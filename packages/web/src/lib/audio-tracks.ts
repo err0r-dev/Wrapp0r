@@ -5,21 +5,18 @@ export interface AudioTrack {
   name: string;
   mood: MusicMood;
   src: string;
+  originalUrl?: string; // Original HTTP URL for server-side export (not blob URL)
   duration?: number; // in seconds
+  artist?: string;
 }
 
-// Audio is currently disabled - no audio files bundled
-// To enable audio, add MP3 files to public/audio/ directory
-export const AUDIO_ENABLED = false;
+// Audio is now enabled via Pixabay API integration
+// Set to false to disable audio entirely
+export const AUDIO_ENABLED = true;
 
-// Map music moods to their corresponding audio tracks
-// These are placeholder paths - replace with actual royalty-free audio files
-// Recommended sources:
-// - Pixabay Music (https://pixabay.com/music/)
-// - Free Music Archive (https://freemusicarchive.org/)
-// - Uppbeat (https://uppbeat.io/)
-
-export const audioTracks: Record<MusicMood, AudioTrack> = {
+// Fallback static tracks (used when API is unavailable)
+// These paths are for bundled audio files - add MP3s to public/audio/ if needed
+export const fallbackTracks: Record<MusicMood, AudioTrack> = {
   energetic: {
     id: 'energetic',
     name: 'Energetic Beat',
@@ -58,6 +55,16 @@ export const audioTracks: Record<MusicMood, AudioTrack> = {
   },
 };
 
+// Map music moods to display names
+export const moodDisplayNames: Record<MusicMood, string> = {
+  energetic: 'Energetic',
+  chill: 'Chill',
+  upbeat: 'Upbeat',
+  dramatic: 'Dramatic',
+  warm: 'Warm',
+  professional: 'Professional',
+};
+
 // Map data categories to suggested music moods
 export const categoryMoodMap: Record<string, MusicMood> = {
   fitness: 'energetic',
@@ -69,9 +76,13 @@ export const categoryMoodMap: Record<string, MusicMood> = {
 };
 
 export function getTrackForMood(mood: MusicMood): AudioTrack {
-  return audioTracks[mood] || audioTracks.upbeat;
+  return fallbackTracks[mood] || fallbackTracks.upbeat;
 }
 
 export function getMoodForCategory(category: string): MusicMood {
   return categoryMoodMap[category] || 'upbeat';
+}
+
+export function getMoodDisplayName(mood: MusicMood): string {
+  return moodDisplayNames[mood] || mood;
 }

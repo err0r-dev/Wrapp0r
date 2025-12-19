@@ -3,7 +3,7 @@ import type { DataCategory } from '@wrapp0r/shared';
 const CATEGORY_CONTEXTS: Record<DataCategory, string> = {
   fitness: 'This is fitness/health tracking data. Focus on achievements, personal records, consistency, and progress. Use energetic, motivating language.',
   music: 'This is music listening data. Focus on top artists, genres, listening trends, and memorable discoveries. Use dynamic, expressive language.',
-  food: 'This is food/nutrition data. Focus on eating patterns, favorite foods, nutritional insights, and culinary adventures. Use warm, appetizing language.',
+  food: 'This is food/nutrition data. Focus on eating patterns, favourite foods, nutritional insights, and culinary adventures. Use warm, appetising language.',
   finance: 'This is financial/spending data. Focus on spending patterns, savings achievements, and smart money moves. Use professional, confident language.',
   productivity: 'This is productivity/work data. Focus on accomplishments, time management, and growth. Use focused, achievement-oriented language.',
   other: 'This is general data. Identify the most interesting patterns and create engaging insights based on what you discover.',
@@ -38,11 +38,26 @@ ${dataSummary}
 \`\`\`
 
 ## Your Task
-1. Analyze the data to find the most interesting patterns, trends, and insights
+1. Analyse the data to find the most interesting patterns, trends, and insights
 2. Create a sequence of 8-12 slides that tell a compelling data story
 3. Use creative, engaging headlines (make them punchy and memorable!)
-4. Choose appropriate visualizations for each insight
-5. Design a cohesive color theme that matches the ${category} theme
+4. Choose appropriate visualisations for each insight
+5. Design a cohesive colour theme inspired by Spotify Wrapped campaigns
+
+## Colour Design Guidelines
+Use colours inspired by Spotify Wrapped campaigns. Choose from these palette styles:
+
+1. **Classic Spotify**: Dark backgrounds (#121212, #191414) with bright green (#1DB954) accents
+2. **Wrapped Gradient**: Vibrant gradients mixing pink (#FF6B9D), orange (#FF8C42), and purple (#A855F7)
+3. **Neon Night**: Deep purple (#1A1A2E) with electric blue (#00D4FF) and hot pink (#FF2D6A)
+4. **Warm Sunset**: Deep orange (#E94057) fading to pink (#FF6B9D) on dark backgrounds
+5. **Cool Electric**: Teal (#00CEC9) and blue (#5F27CD) on black backgrounds
+
+IMPORTANT:
+- Prefer dark backgrounds (#121212, #1A1A2E, #191414) with bright, contrasting accent colours
+- Text colour should ALWAYS be white (#FFFFFF) or near-white for readability
+- Use vibrant gradients for slide backgrounds (e.g., "linear-gradient(135deg, #FF6B9D, #A855F7)")
+- Ensure sufficient contrast for accessibility
 
 ## Slide Requirements
 - Start with an exciting title slide introducing the wrapped

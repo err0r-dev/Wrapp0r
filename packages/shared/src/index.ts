@@ -38,6 +38,9 @@ export {
   DataCategorySchema,
   DATA_CATEGORIES,
   OpenAIModelSchema,
+  MODEL_CONFIG,
+  isReasoningModel,
+  getModelConfig,
   GenerateRequestSchema,
   SSEEventSchema,
   StoredSettingsSchema,
@@ -46,6 +49,8 @@ export {
 export type {
   DataCategory,
   OpenAIModel,
+  ModelType,
+  ModelConfig,
   GenerateRequest,
   SSEEvent,
   StoredSettings,

@@ -7,23 +7,26 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { WrappedComposition, calculateTotalDuration } from '@/remotion';
 import { useVideoExport } from '@/hooks/useVideoExport';
+import { useSettings } from '@/hooks/useSettings';
 
 interface VideoExportModalProps {
   wrapped: WrappedExperience;
   isOpen: boolean;
   onClose: () => void;
+  currentAudioUrl?: string;
 }
 
 const FPS = 30;
 const WIDTH = 1280;
 const HEIGHT = 720;
 
-export function VideoExportModal({ wrapped, isOpen, onClose }: VideoExportModalProps) {
+export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl }: VideoExportModalProps) {
   const playerRef = useRef<PlayerRef>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPreviewReady, setIsPreviewReady] = useState(false);
 
   const { status, error, exportVideo, reset } = useVideoExport();
+  const { settings } = useSettings();
 
   // Calculate total duration in frames
   const durationInFrames = calculateTotalDuration(wrapped, FPS);
@@ -57,8 +60,12 @@ export function VideoExportModal({ wrapped, isOpen, onClose }: VideoExportModalP
       playerRef.current.pause();
     }
     setIsPlaying(false);
-    exportVideo(wrapped);
-  }, [exportVideo, wrapped]);
+    // Pass Jamendo client ID and current audio URL for video export
+    exportVideo(wrapped, {
+      jamendoClientId: settings.pixabayApiKey,
+      audioUrl: currentAudioUrl,
+    });
+  }, [exportVideo, wrapped, settings.pixabayApiKey, currentAudioUrl]);
 
   // Track when player is ready
   useEffect(() => {
@@ -219,7 +226,7 @@ export function VideoExportModal({ wrapped, isOpen, onClose }: VideoExportModalP
           {/* Progress bar during export */}
           {isExporting && (
             <div className="px-6 py-4">
-              <Progress value={status === 'downloading' ? 90 : 50} className="h-2" />
+              <Progress indeterminate className="h-2" />
             </div>
           )}
 

@@ -15,12 +15,16 @@ interface ThemeProviderProps {
   storageKey?: string;
 }
 
-// Get the system preference
+// Get the system preference - defaults to dark (Spotify style)
 function getSystemTheme(): Theme {
   if (typeof window !== 'undefined') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    // Check if user explicitly prefers light mode
+    if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      return 'light';
+    }
   }
-  return 'light';
+  // Default to dark mode (Spotify style)
+  return 'dark';
 }
 
 export function ThemeProvider({
@@ -36,7 +40,7 @@ export function ThemeProvider({
       }
       return stored;
     }
-    return 'light';
+    return 'dark'; // Default to dark (Spotify style)
   });
 
   useEffect(() => {

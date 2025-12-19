@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, Music, AlertCircle } from 'lucide-react';
+import { Volume2, VolumeX, Music, AlertCircle, Play, Pause, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AudioTrack } from '@/lib/audio-tracks';
 
@@ -12,6 +12,8 @@ interface AudioPlayerProps {
   currentTrack: AudioTrack | null;
   onToggleMute: () => void;
   onPlay: () => void;
+  onTogglePlay?: () => void;
+  onSkip?: () => void;
   className?: string;
   variant?: 'default' | 'minimal' | 'pill';
 }
@@ -25,6 +27,8 @@ export function AudioPlayer({
   currentTrack,
   onToggleMute,
   onPlay,
+  onTogglePlay,
+  onSkip,
   className = '',
   variant = 'default',
 }: AudioPlayerProps) {
@@ -99,19 +103,75 @@ export function AudioPlayer({
     );
   }
 
-  // Pill variant - compact with track name
+  // Pill variant - compact with track name and full controls
   if (variant === 'pill') {
     return (
       <motion.div
-        className={`flex items-center gap-2 rounded-full bg-black/20 px-3 py-1.5 backdrop-blur-sm ${className}`}
+        className={`flex items-center gap-1 rounded-full bg-black/20 px-2 py-1.5 backdrop-blur-sm ${className}`}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
+        {/* Play/Pause button */}
+        {onTogglePlay && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onTogglePlay}
+            className="h-6 w-6 p-0 hover:bg-white/10"
+            disabled={isLoading}
+          >
+            <AnimatePresence mode="wait">
+              {isPlaying ? (
+                <motion.div
+                  key="pause"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                >
+                  <Pause className="h-4 w-4" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="play"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                >
+                  <Play className="h-4 w-4" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Button>
+        )}
+
+        {/* Skip button */}
+        {onSkip && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onSkip}
+            className="h-6 w-6 p-0 hover:bg-white/10"
+            disabled={isLoading}
+            title="Skip to different track"
+          >
+            {isLoading ? (
+              <motion.div
+                className="h-3 w-3 rounded-full border-2 border-current border-t-transparent"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              />
+            ) : (
+              <SkipForward className="h-4 w-4" />
+            )}
+          </Button>
+        )}
+
+        {/* Mute button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={onToggleMute}
-          className="h-6 w-6 p-0"
+          className="h-6 w-6 p-0 hover:bg-white/10"
           disabled={isLoading}
         >
           {isMuted ? (
@@ -121,19 +181,22 @@ export function AudioPlayer({
           )}
         </Button>
 
+        {/* Track info and visualiser */}
         {currentTrack && (
-          <motion.span
-            className="text-xs font-medium"
+          <motion.div
+            className="flex items-center gap-2 pl-1"
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: 'auto' }}
           >
-            {currentTrack.name}
-          </motion.span>
+            <span className="max-w-[120px] truncate text-xs font-medium">
+              {currentTrack.artist || currentTrack.name}
+            </span>
+          </motion.div>
         )}
 
         {isPlaying && !isMuted && (
           <motion.div
-            className="flex items-center gap-0.5"
+            className="flex items-center gap-0.5 pl-1"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >

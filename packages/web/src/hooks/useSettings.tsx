@@ -5,6 +5,7 @@ const STORAGE_KEY = 'wrapp0r-settings';
 
 const DEFAULT_SETTINGS: StoredSettings = {
   apiKey: undefined,
+  pixabayApiKey: undefined,
   model: 'gpt-4o',
   preferredCategory: undefined,
   darkMode: false,
@@ -14,7 +15,9 @@ interface SettingsContextValue {
   settings: StoredSettings;
   isLoaded: boolean;
   hasApiKey: boolean;
+  hasPixabayApiKey: boolean;
   setApiKey: (apiKey: string | undefined) => void;
+  setPixabayApiKey: (apiKey: string | undefined) => void;
   setModel: (model: OpenAIModel) => void;
   setPreferredCategory: (category: DataCategory | undefined) => void;
   clearSettings: () => void;
@@ -59,6 +62,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [saveSettings]
   );
 
+  const setPixabayApiKey = useCallback(
+    (pixabayApiKey: string | undefined) => saveSettings({ pixabayApiKey }),
+    [saveSettings]
+  );
+
   const setModel = useCallback(
     (model: OpenAIModel) => saveSettings({ model }),
     [saveSettings]
@@ -76,6 +84,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const hasApiKey = Boolean(settings.apiKey);
+  const hasPixabayApiKey = Boolean(settings.pixabayApiKey);
 
   return (
     <SettingsContext.Provider
@@ -83,7 +92,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         settings,
         isLoaded,
         hasApiKey,
+        hasPixabayApiKey,
         setApiKey,
+        setPixabayApiKey,
         setModel,
         setPreferredCategory,
         clearSettings,

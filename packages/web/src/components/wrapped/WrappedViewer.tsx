@@ -7,6 +7,7 @@ import { SlideRenderer } from './SlideRenderer';
 import { useWrappedNavigation } from '@/hooks/useWrappedNavigation';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
+import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AudioPlayer } from '@/components/AudioPlayer';
@@ -28,8 +29,10 @@ export function WrappedViewer({
   enableAudio = true,
   enableVideoExport = true,
 }: WrappedViewerProps) {
-  // Only enable audio if files are available
-  const audioEnabled = enableAudio && AUDIO_ENABLED;
+  // Get Pixabay API key from settings
+  const { settings } = useSettings();
+  // Only enable audio if files are available or we have a Pixabay key
+  const audioEnabled = enableAudio && (AUDIO_ENABLED || !!settings.pixabayApiKey);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const {
     currentIndex,
@@ -51,6 +54,7 @@ export function WrappedViewer({
     autoPlay: audioEnabled,
     loop: true,
     volume: 0.4,
+    pixabayApiKey: settings.pixabayApiKey,
   });
 
   // Swipe navigation for mobile
@@ -115,6 +119,8 @@ export function WrappedViewer({
                   currentTrack={audio.currentTrack}
                   onToggleMute={audio.toggleMute}
                   onPlay={audio.play}
+                  onTogglePlay={audio.toggle}
+                  onSkip={audio.skipTrack}
                   variant="pill"
                   className="text-white"
                 />
@@ -278,6 +284,7 @@ export function WrappedViewer({
           wrapped={wrapped}
           isOpen={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
+          currentAudioUrl={audio.currentTrack?.originalUrl}
         />
       )}
     </>,

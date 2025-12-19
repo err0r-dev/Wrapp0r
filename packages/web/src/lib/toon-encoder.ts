@@ -124,9 +124,9 @@ export function encodeToToon(
 }
 
 /**
- * Analyzes data to provide statistics that can help with insights
+ * Analyses data to provide statistics that can help with insights
  */
-export function analyzeData(sheet: SheetData): Record<string, unknown> {
+export function analyseData(sheet: SheetData): Record<string, unknown> {
   const analysis: Record<string, unknown> = {
     rowCount: sheet.rowCount,
     columnCount: sheet.headers.length,

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MusicMood } from '@wrapp0r/shared';
-import { getTrackForMood, type AudioTrack } from '@/lib/audio-tracks';
+import { getTrackForMood, type AudioTrack, AUDIO_ENABLED } from '@/lib/audio-tracks';
+import { fetchMusicTrack, fetchNewTrack } from '@/lib/music-service';
 
 interface UseAudioPlayerOptions {
   mood?: MusicMood;
@@ -9,6 +10,7 @@ interface UseAudioPlayerOptions {
   volume?: number;
   fadeInDuration?: number;
   fadeOutDuration?: number;
+  pixabayApiKey?: string;
 }
 
 interface UseAudioPlayerReturn {
@@ -29,6 +31,7 @@ interface UseAudioPlayerReturn {
   fadeIn: (duration?: number) => void;
   fadeOut: (duration?: number) => void;
   changeMood: (mood: MusicMood) => void;
+  skipTrack: () => Promise<void>;
 }
 
 export function useAudioPlayer({
@@ -38,9 +41,11 @@ export function useAudioPlayer({
   volume: initialVolume = 0.5,
   fadeInDuration = 1000,
   fadeOutDuration = 500,
+  pixabayApiKey,
 }: UseAudioPlayerOptions = {}): UseAudioPlayerReturn {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const trackLoadedRef = useRef(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -48,9 +53,8 @@ export function useAudioPlayer({
   const [hasError, setHasError] = useState(false);
   const [canAutoplay, setCanAutoplay] = useState(true);
   const [volume, setVolumeState] = useState(initialVolume);
-  const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(
-    mood ? getTrackForMood(mood) : null
-  );
+  const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null);
+  const [currentTrackId, setCurrentTrackId] = useState<number | undefined>(undefined);
 
   // Initialize audio element
   useEffect(() => {
@@ -92,24 +96,75 @@ export function useAudioPlayer({
     };
   }, [loop, initialVolume]);
 
-  // Update track when mood changes
+  // Load track when mood changes - try Pixabay API first, then fall back to static
   useEffect(() => {
-    if (mood) {
-      const track = getTrackForMood(mood);
-      setCurrentTrack(track);
+    if (!mood || !AUDIO_ENABLED) return;
 
-      if (audioRef.current) {
-        const wasPlaying = isPlaying;
-        audioRef.current.src = track.src;
+    // Prevent duplicate loading
+    if (trackLoadedRef.current) return;
+    trackLoadedRef.current = true;
 
-        if (wasPlaying || autoPlay) {
-          audioRef.current.play().catch(() => {
-            setCanAutoplay(false);
-          });
+    const loadTrack = async () => {
+      setIsLoading(true);
+      setHasError(false);
+
+      try {
+        // Try Pixabay API if key is provided
+        if (pixabayApiKey) {
+          const pixabayTrack = await fetchMusicTrack(mood, pixabayApiKey);
+
+          if (pixabayTrack) {
+            const track: AudioTrack = {
+              id: `pixabay-${mood}`,
+              name: `${mood.charAt(0).toUpperCase() + mood.slice(1)} Track`,
+              mood,
+              src: pixabayTrack.url,
+              originalUrl: pixabayTrack.originalUrl,
+              duration: pixabayTrack.duration,
+              artist: pixabayTrack.artist,
+            };
+            setCurrentTrack(track);
+            setIsLoading(false);
+
+            if (audioRef.current) {
+              audioRef.current.src = track.src;
+              if (autoPlay) {
+                audioRef.current.play().catch(() => {
+                  setCanAutoplay(false);
+                });
+              }
+            }
+            return;
+          }
         }
+
+        // Fall back to static track (will likely fail without files)
+        const fallbackTrack = getTrackForMood(mood);
+        setCurrentTrack(fallbackTrack);
+        setIsLoading(false);
+
+        if (audioRef.current) {
+          audioRef.current.src = fallbackTrack.src;
+          if (autoPlay) {
+            audioRef.current.play().catch(() => {
+              setCanAutoplay(false);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load audio track:', error);
+        setHasError(true);
+        setIsLoading(false);
       }
-    }
-  }, [mood, autoPlay, isPlaying]);
+    };
+
+    loadTrack();
+
+    // Reset on unmount to allow reloading
+    return () => {
+      trackLoadedRef.current = false;
+    };
+  }, [mood, pixabayApiKey, autoPlay]);
 
   const play = useCallback(async () => {
     if (!audioRef.current || !currentTrack) return;
@@ -249,31 +304,122 @@ export function useAudioPlayer({
   );
 
   const changeMood = useCallback(
-    (newMood: MusicMood) => {
-      const track = getTrackForMood(newMood);
-      setCurrentTrack(track);
+    async (newMood: MusicMood) => {
+      setIsLoading(true);
 
+      try {
+        let track: AudioTrack;
+
+        // Try Pixabay API if key is provided
+        if (pixabayApiKey) {
+          const pixabayTrack = await fetchMusicTrack(newMood, pixabayApiKey);
+          if (pixabayTrack) {
+            track = {
+              id: `pixabay-${newMood}`,
+              name: `${newMood.charAt(0).toUpperCase() + newMood.slice(1)} Track`,
+              mood: newMood,
+              src: pixabayTrack.url,
+              originalUrl: pixabayTrack.originalUrl,
+              duration: pixabayTrack.duration,
+              artist: pixabayTrack.artist,
+            };
+          } else {
+            track = getTrackForMood(newMood);
+          }
+        } else {
+          track = getTrackForMood(newMood);
+        }
+
+        setCurrentTrack(track);
+        setIsLoading(false);
+
+        if (audioRef.current) {
+          const wasPlaying = isPlaying;
+
+          // Fade out, change track, fade in
+          if (wasPlaying) {
+            fadeOut(300);
+            setTimeout(() => {
+              if (audioRef.current) {
+                audioRef.current.src = track.src;
+                audioRef.current.play().then(() => {
+                  fadeIn(300);
+                });
+              }
+            }, 350);
+          } else {
+            audioRef.current.src = track.src;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to change mood:', error);
+        setIsLoading(false);
+      }
+    },
+    [isPlaying, fadeOut, fadeIn, pixabayApiKey]
+  );
+
+  const skipTrack = useCallback(async () => {
+    if (!mood || !pixabayApiKey) {
+      console.warn('Cannot skip track: missing mood or API key');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const newTrackData = await fetchNewTrack(mood, pixabayApiKey);
+
+      if (!newTrackData) {
+        console.warn('No new track available');
+        setIsLoading(false);
+        return;
+      }
+
+      const track: AudioTrack = {
+        id: `jamendo-${newTrackData.id}`,
+        name: `${mood.charAt(0).toUpperCase() + mood.slice(1)} Track`,
+        mood,
+        src: newTrackData.url,
+        originalUrl: newTrackData.originalUrl,
+        duration: newTrackData.duration,
+        artist: newTrackData.artist,
+      };
+
+      setCurrentTrackId(newTrackData.id);
+
+      // Smooth transition: fade out, change track, fade in
       if (audioRef.current) {
         const wasPlaying = isPlaying;
 
-        // Fade out, change track, fade in
         if (wasPlaying) {
           fadeOut(300);
           setTimeout(() => {
             if (audioRef.current) {
               audioRef.current.src = track.src;
+              setCurrentTrack(track);
               audioRef.current.play().then(() => {
                 fadeIn(300);
+              }).catch(() => {
+                setCanAutoplay(false);
               });
             }
+            setIsLoading(false);
           }, 350);
         } else {
           audioRef.current.src = track.src;
+          setCurrentTrack(track);
+          setIsLoading(false);
         }
+      } else {
+        setCurrentTrack(track);
+        setIsLoading(false);
       }
-    },
-    [isPlaying, fadeOut, fadeIn]
-  );
+    } catch (error) {
+      console.error('Failed to skip track:', error);
+      setIsLoading(false);
+    }
+  }, [mood, pixabayApiKey, isPlaying, fadeOut, fadeIn]);
 
   // Cleanup fade interval on unmount
   useEffect(() => {
@@ -302,5 +448,6 @@ export function useAudioPlayer({
     fadeIn,
     fadeOut,
     changeMood,
+    skipTrack,
   };
 }
