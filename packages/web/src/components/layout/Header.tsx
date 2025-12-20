@@ -1,4 +1,5 @@
-import { Settings, Moon, Sun } from 'lucide-react';
+import { Settings, Moon, Sun, HelpCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTheme } from './ThemeProvider';
 import { useState } from 'react';
@@ -14,11 +15,21 @@ export function Header() {
     <>
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-              W
-            </div>
-            <span className="text-lg font-semibold">Wrapp0r</span>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+                W
+              </div>
+              <span className="text-lg font-semibold">Wrapp0r</span>
+            </Link>
+            <nav className="hidden sm:flex items-center gap-1">
+              <Link to="/guide">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
+                  <HelpCircle className="h-4 w-4" />
+                  <span>What Can I Wrap?</span>
+                </Button>
+              </Link>
+            </nav>
           </div>
 
           <div className="flex items-center gap-2">

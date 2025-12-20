@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
-import { Upload, FileSpreadsheet, FileText, X, CheckCircle2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, FileJson, X, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 // Supported file extensions
-const SUPPORTED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
-const ACCEPTED_MIME_TYPES = '.xlsx,.xls,.csv,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const SUPPORTED_EXTENSIONS = ['.xlsx', '.xls', '.csv', '.json'];
+const ACCEPTED_MIME_TYPES = '.xlsx,.xls,.csv,.json,text/csv,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 function isValidFile(fileName: string): boolean {
   const lowerName = fileName.toLowerCase();
@@ -13,7 +13,10 @@ function isValidFile(fileName: string): boolean {
 }
 
 function getFileIcon(fileName: string) {
-  return fileName.toLowerCase().endsWith('.csv') ? FileText : FileSpreadsheet;
+  const lowerName = fileName.toLowerCase();
+  if (lowerName.endsWith('.json')) return FileJson;
+  if (lowerName.endsWith('.csv')) return FileText;
+  return FileSpreadsheet;
 }
 
 interface ParsedFile {
@@ -41,33 +44,58 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
     setError(null);
 
     try {
-      // Dynamic import xlsx to reduce initial bundle size
-      const XLSX = await import('xlsx');
-
       const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer);
+      const isJson = file.name.toLowerCase().endsWith('.json');
 
-      const sheets = workbook.SheetNames.map((name) => {
-        const worksheet = workbook.Sheets[name];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: null });
-        const headers = jsonData.length > 0 ? Object.keys(jsonData[0] as object) : [];
+      if (isJson) {
+        // Parse JSON file
+        const text = new TextDecoder().decode(arrayBuffer);
+        const jsonData = JSON.parse(text);
 
-        return {
-          name,
-          headers,
-          rowCount: jsonData.length,
-        };
-      });
+        // Handle both array and object formats
+        const rows: Record<string, unknown>[] = Array.isArray(jsonData)
+          ? jsonData
+          : [jsonData];
 
-      const totalRows = sheets.reduce((acc, sheet) => acc + sheet.rowCount, 0);
+        // Flatten nested objects to get headers
+        const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
 
-      onFileSelect({
-        name: file.name,
-        sheets,
-        totalRows,
-      }, arrayBuffer);
+        onFileSelect({
+          name: file.name,
+          sheets: [{
+            name: 'data',
+            headers,
+            rowCount: rows.length,
+          }],
+          totalRows: rows.length,
+        }, arrayBuffer);
+      } else {
+        // Parse Excel/CSV file
+        const XLSX = await import('xlsx');
+        const workbook = XLSX.read(arrayBuffer);
+
+        const sheets = workbook.SheetNames.map((name) => {
+          const worksheet = workbook.Sheets[name];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: null });
+          const headers = jsonData.length > 0 ? Object.keys(jsonData[0] as object) : [];
+
+          return {
+            name,
+            headers,
+            rowCount: jsonData.length,
+          };
+        });
+
+        const totalRows = sheets.reduce((acc, sheet) => acc + sheet.rowCount, 0);
+
+        onFileSelect({
+          name: file.name,
+          sheets,
+          totalRows,
+        }, arrayBuffer);
+      }
     } catch {
-      setError('Failed to parse file. Please ensure it\'s a valid Excel or CSV file.');
+      setError('Failed to parse file. Please ensure it\'s a valid Excel, CSV, or JSON file.');
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +110,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
       if (file && isValidFile(file.name)) {
         parseFile(file);
       } else {
-        setError('Please upload an Excel or CSV file (.xlsx, .xls, or .csv)');
+        setError('Please upload an Excel, CSV, or JSON file');
       }
     },
     [parseFile]
@@ -105,7 +133,8 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
 
   if (selectedFile) {
     const FileIcon = getFileIcon(selectedFile.name);
-    const isCSV = selectedFile.name.toLowerCase().endsWith('.csv');
+    const lowerName = selectedFile.name.toLowerCase();
+    const isSingleSheet = lowerName.endsWith('.csv') || lowerName.endsWith('.json');
 
     return (
       <div className="space-y-3">
@@ -116,7 +145,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
           <div className="flex-1 min-w-0">
             <p className="truncate font-medium">{selectedFile.name}</p>
             <p className="text-xs text-muted-foreground">
-              {isCSV ? '' : `${selectedFile.sheets.length} sheet(s) · `}{selectedFile.totalRows.toLocaleString()} rows
+              {isSingleSheet ? '' : `${selectedFile.sheets.length} sheet(s) · `}{selectedFile.totalRows.toLocaleString()} rows
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={handleClear}>
@@ -131,9 +160,9 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
               key={sheet.name}
               className="rounded border bg-muted/50 p-2 text-xs"
             >
-              {!isCSV && <p className="font-medium">{sheet.name}</p>}
-              <p className={isCSV ? 'font-medium' : 'text-muted-foreground'}>
-                {isCSV ? 'Columns: ' : ''}{sheet.headers.slice(0, 5).join(', ')}
+              {!isSingleSheet && <p className="font-medium">{sheet.name}</p>}
+              <p className={isSingleSheet ? 'font-medium' : 'text-muted-foreground'}>
+                {isSingleSheet ? 'Fields: ' : ''}{sheet.headers.slice(0, 5).join(', ')}
                 {sheet.headers.length > 5 && ` +${sheet.headers.length - 5} more`}
               </p>
             </div>
@@ -189,7 +218,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
           <p className="text-sm font-medium">
             {isDragging ? 'Drop your file here' : 'Drop file or click to upload'}
           </p>
-          <p className="text-xs text-muted-foreground">.xlsx, .xls, or .csv</p>
+          <p className="text-xs text-muted-foreground">.xlsx, .csv, or .json</p>
         </>
       )}
 

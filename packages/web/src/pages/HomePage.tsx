@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, Sparkles, ArrowRight, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useSettings, useWrappedGeneration } from '@/hooks';
 import { FileDropzone } from '@/components/upload/FileDropzone';
 import { CategorySelect } from '@/components/upload/CategorySelect';
+import { detectCategory } from '@/lib/category-detector';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { WrappedViewer } from '@/components/wrapped/WrappedViewer';
 import { ErrorMessage } from '@/components/ErrorMessage';
@@ -43,9 +44,33 @@ export function HomePage() {
 
   const canGenerate = hasApiKey && file && fileData && category;
 
+  // Extract all unique headers from the file for category detection
+  const allHeaders = useMemo(() => {
+    if (!file) return [];
+    const headers = new Set<string>();
+    for (const sheet of file.sheets) {
+      for (const header of sheet.headers) {
+        headers.add(header);
+      }
+    }
+    return Array.from(headers);
+  }, [file]);
+
+  // Auto-select category when detected with high confidence
+  useEffect(() => {
+    if (allHeaders.length > 0 && !category) {
+      const detection = detectCategory(allHeaders);
+      if (detection.confidence >= 50 && detection.category !== 'other') {
+        setCategory(detection.category);
+      }
+    }
+  }, [allHeaders, category]);
+
   const handleFileSelect = (parsedFile: ParsedFile | null, data: ArrayBuffer | null) => {
     setFile(parsedFile);
     setFileData(data);
+    // Reset category when file changes so auto-detection can run again
+    setCategory(null);
   };
 
   const handleGenerate = async () => {
@@ -159,6 +184,7 @@ export function HomePage() {
               customDescription={customDescription}
               onCustomDescriptionChange={setCustomDescription}
               disabled={!file}
+              headers={allHeaders}
             />
           </CardContent>
         </Card>

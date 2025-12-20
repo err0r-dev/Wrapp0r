@@ -10,6 +10,17 @@ export function ListSlide({ slide }: ListSlideProps) {
   const variants = getAnimationVariants(slide.animation);
   const { title, subtitle, items, layout } = slide.content;
 
+  // Sort items by rank if rank is defined (rank 1 = highest/first)
+  const sortedItems = [...items].sort((a, b) => {
+    if (a.rank !== undefined && b.rank !== undefined) {
+      return a.rank - b.rank;
+    }
+    // Items with rank come before items without
+    if (a.rank !== undefined) return -1;
+    if (b.rank !== undefined) return 1;
+    return 0;
+  });
+
   const renderItems = () => {
     switch (layout) {
       case 'grid':
@@ -20,7 +31,7 @@ export function ListSlide({ slide }: ListSlideProps) {
             initial="initial"
             animate="animate"
           >
-            {items.map((item, index) => (
+            {sortedItems.map((item, index) => (
               <motion.div
                 key={index}
                 className="flex flex-col items-center justify-center rounded-xl bg-white/10 p-4 backdrop-blur-sm md:p-6"
@@ -50,7 +61,7 @@ export function ListSlide({ slide }: ListSlideProps) {
             initial="initial"
             animate="animate"
           >
-            {items.map((item, index) => (
+            {sortedItems.map((item, index) => (
               <motion.div
                 key={index}
                 className="flex items-center gap-3 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm md:px-6 md:py-3"
@@ -75,7 +86,7 @@ export function ListSlide({ slide }: ListSlideProps) {
             initial="initial"
             animate="animate"
           >
-            {items.map((item, index) => (
+            {sortedItems.map((item, index) => (
               <motion.div
                 key={index}
                 className="flex items-center gap-4 rounded-xl bg-white/10 p-3 backdrop-blur-sm md:p-4"

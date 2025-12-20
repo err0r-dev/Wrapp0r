@@ -32,7 +32,9 @@ export function StatSlide({ slide }: StatSlideProps) {
   const variants = getAnimationVariants(slide.animation);
   const { label, value, suffix, comparison, icon } = slide.content;
 
-  const numericValue = typeof value === 'number' ? value : parseFloat(value);
+  // Remove commas from string values before parsing (e.g., "15,897" -> "15897")
+  const cleanValue = typeof value === 'string' ? value.replace(/,/g, '') : value;
+  const numericValue = typeof cleanValue === 'number' ? cleanValue : parseFloat(cleanValue);
   const isNumeric = !isNaN(numericValue);
 
   // Dynamically get the icon component

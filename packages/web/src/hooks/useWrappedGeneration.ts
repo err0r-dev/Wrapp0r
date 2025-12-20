@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import type { WrappedExperience, DataCategory, OpenAIModel } from '@wrapp0r/shared';
 import { generateWrapped, type GenerationProgress, type GenerationStage } from '@/lib/api-client';
 import { encodeToToon } from '@/lib/toon-encoder';
+import { validateWrapped, type ValidationWarning, type ValidationResult } from '@/lib/wrapped-validator';
 
 interface ParsedFile {
   name: string;
@@ -19,6 +20,7 @@ interface GenerationState {
   progress: GenerationProgress | null;
   result: WrappedExperience | null;
   error: string | null;
+  validationWarnings: ValidationWarning[];
 }
 
 interface UseWrappedGenerationOptions {
@@ -39,6 +41,7 @@ export function useWrappedGeneration({ apiKey, model }: UseWrappedGenerationOpti
     progress: null,
     result: null,
     error: null,
+    validationWarnings: [],
   });
 
   const generate = useCallback(
@@ -48,25 +51,50 @@ export function useWrappedGeneration({ apiKey, model }: UseWrappedGenerationOpti
         progress: { stage: 'preparing', progress: 0, message: 'Preparing your data...' },
         result: null,
         error: null,
+        validationWarnings: [],
       });
 
       try {
         // Parse the file to get row data for TOON encoding
-        const XLSX = await import('xlsx');
-        const workbook = XLSX.read(fileData);
+        const isJson = file.name.toLowerCase().endsWith('.json');
+        let sheets: Array<{
+          name: string;
+          headers: string[];
+          rows: Record<string, unknown>[];
+          rowCount: number;
+        }>;
 
-        const sheets = workbook.SheetNames.map((name) => {
-          const worksheet = workbook.Sheets[name];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: null }) as Record<string, unknown>[];
-          const headers = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
+        if (isJson) {
+          // Parse JSON file
+          const text = new TextDecoder().decode(fileData);
+          const jsonData = JSON.parse(text);
+          const rows: Record<string, unknown>[] = Array.isArray(jsonData) ? jsonData : [jsonData];
+          const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
 
-          return {
-            name,
+          sheets = [{
+            name: 'data',
             headers,
-            rows: jsonData,
-            rowCount: jsonData.length,
-          };
-        });
+            rows,
+            rowCount: rows.length,
+          }];
+        } else {
+          // Parse Excel/CSV file
+          const XLSX = await import('xlsx');
+          const workbook = XLSX.read(fileData);
+
+          sheets = workbook.SheetNames.map((name) => {
+            const worksheet = workbook.Sheets[name];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: null }) as Record<string, unknown>[];
+            const headers = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
+
+            return {
+              name,
+              headers,
+              rows: jsonData,
+              rowCount: jsonData.length,
+            };
+          });
+        }
 
         // Encode data to TOON format
         const dataSummary = encodeToToon(
@@ -77,7 +105,6 @@ export function useWrappedGeneration({ apiKey, model }: UseWrappedGenerationOpti
           },
           category,
           {
-            maxRows: 100,
             maxColumnsPerSheet: 15,
             includeAllSheets: true,
           }
@@ -109,11 +136,16 @@ export function useWrappedGeneration({ apiKey, model }: UseWrappedGenerationOpti
           }
         );
 
+        // Validate the generated content against original data
+        const allRows = sheets.flatMap((sheet) => sheet.rows || []);
+        const validation = validateWrapped(result, allRows);
+
         setState({
           isGenerating: false,
           progress: { stage: 'complete', progress: 100, message: 'Done!' },
           result,
           error: null,
+          validationWarnings: validation.warnings,
         });
 
         return result;
@@ -136,6 +168,7 @@ export function useWrappedGeneration({ apiKey, model }: UseWrappedGenerationOpti
       progress: null,
       result: null,
       error: null,
+      validationWarnings: [],
     });
   }, []);
 

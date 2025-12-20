@@ -25,7 +25,7 @@ interface ParsedExcel {
 }
 
 interface ToonEncoderOptions {
-  maxRows?: number; // Maximum rows to include (default: 100)
+  maxRows?: number; // Maximum rows to include (default: no limit)
   maxColumnsPerSheet?: number; // Maximum columns to include (default: 15)
   includeAllSheets?: boolean; // Include all sheets or just the first one
 }
@@ -55,12 +55,15 @@ export function encodeToToon(
   options: ToonEncoderOptions = {}
 ): string {
   const {
-    maxRows = 100,
+    maxRows = Infinity,
     maxColumnsPerSheet = 15,
     includeAllSheets = true,
   } = options;
 
   const lines: string[] = [];
+
+  // Process sheets
+  const sheetsToProcess = includeAllSheets ? data.sheets : data.sheets.slice(0, 1);
 
   // Metadata section (YAML-style)
   lines.push('metadata:');
@@ -70,8 +73,44 @@ export function encodeToToon(
   lines.push(`  sheets: ${data.sheets.length}`);
   lines.push('');
 
-  // Process sheets
-  const sheetsToProcess = includeAllSheets ? data.sheets : data.sheets.slice(0, 1);
+  // Pre-calculate statistics FIRST so AI sees totals before raw data
+  lines.push('=== IMPORTANT: USE THESE TOTALS FOR STATISTICS ===');
+  sheetsToProcess.forEach((sheet) => {
+    const columnsToInclude = sheet.headers.slice(0, maxColumnsPerSheet);
+
+    // Debug: log what we're working with
+    console.log('[TOON] Sheet rows:', sheet.rows?.length, 'Headers:', columnsToInclude);
+
+    // Calculate stats for each numeric column
+    for (const header of columnsToInclude) {
+      const values: number[] = [];
+      for (const row of sheet.rows || []) {
+        const val = row[header];
+        if (typeof val === 'number' && !isNaN(val)) {
+          values.push(val);
+        } else if (typeof val === 'string') {
+          const parsed = parseFloat(val.replace(/[,\s]/g, ''));
+          if (!isNaN(parsed)) {
+            values.push(parsed);
+          }
+        }
+      }
+
+      if (values.length > 0) {
+        const sum = values.reduce((a, b) => a + b, 0);
+        const avg = sum / values.length;
+
+        // Debug: log calculated values
+        console.log(`[TOON] ${header}: sum=${sum}, avg=${avg}, count=${values.length}`);
+
+        lines.push(`TOTAL ${header}: ${Math.round(sum)}`);
+        lines.push(`AVERAGE ${header}: ${Math.round(avg * 10) / 10}`);
+      }
+    }
+  });
+  lines.push(`TOTAL DAYS/ENTRIES: ${data.totalRows}`);
+  lines.push('=== END TOTALS - USE VALUES ABOVE FOR STAT SLIDES ===');
+  lines.push('');
 
   sheetsToProcess.forEach((sheet, sheetIndex) => {
     // Calculate rows per sheet to stay within limit

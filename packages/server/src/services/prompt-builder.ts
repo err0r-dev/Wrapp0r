@@ -1,11 +1,18 @@
 import type { DataCategory } from '@wrapp0r/shared';
 
 const CATEGORY_CONTEXTS: Record<DataCategory, string> = {
-  fitness: 'This is fitness/health tracking data. Focus on achievements, personal records, consistency, and progress. Use energetic, motivating language.',
+  fitness: 'This is FITNESS/EXERCISE tracking data. Calories here are BURNED through physical activity. Focus on workout achievements, personal records, consistency, and progress. Use energetic, motivating language.',
   music: 'This is music listening data. Focus on top artists, genres, listening trends, and memorable discoveries. Use dynamic, expressive language.',
-  food: 'This is food/nutrition data. Focus on eating patterns, favourite foods, nutritional insights, and culinary adventures. Use warm, appetising language.',
+  food: `This is FOOD/NUTRITION tracking data - what the user ATE and CONSUMED.
+CRITICAL: Calories/kcal in this data are calories EATEN (intake), NOT burned!
+- Do NOT say "calories burned" or make exercise comparisons (marathons, etc.)
+- DO say "calories consumed", "eaten", "intake", "enjoyed"
+- Focus on: favourite foods, eating patterns, macro breakdown, nutritional balance
+- Make comparisons like "enough pizza to stack to the moon" NOT "burned enough to run X marathons"`,
   finance: 'This is financial/spending data. Focus on spending patterns, savings achievements, and smart money moves. Use professional, confident language.',
   productivity: 'This is productivity/work data. Focus on accomplishments, time management, and growth. Use focused, achievement-oriented language.',
+  entertainment: 'This is entertainment data (movies, TV shows, books). Focus on viewing/reading habits, favourites, genres explored, and memorable discoveries. Use cinematic, storytelling language.',
+  gaming: 'This is gaming data. Focus on playtime, achievements, favourite games, and gaming milestones. Use exciting, immersive language.',
   other: 'This is general data. Identify the most interesting patterns and create engaging insights based on what you discover.',
 };
 
@@ -15,6 +22,8 @@ const MUSIC_MOODS: Record<DataCategory, string> = {
   food: 'warm',
   finance: 'professional',
   productivity: 'chill',
+  entertainment: 'dramatic',
+  gaming: 'energetic',
   other: 'upbeat',
 };
 
@@ -36,6 +45,30 @@ ${customDescription ? `\nAdditional context from user: ${customDescription}` : '
 \`\`\`
 ${dataSummary}
 \`\`\`
+
+## CRITICAL: Data Accuracy Rules
+1. ONLY use values that actually exist in the provided data - NEVER invent or fabricate numbers
+2. For stat slides, USE THE CALCULATED_TOTALS provided at the end of the data - these are pre-calculated sums/averages
+3. For list slides, items MUST exist in the data and be sorted correctly (rank 1 = highest/best)
+4. For comparisons and fun facts, use the CALCULATED_TOTALS values, not made-up numbers
+5. If a metric doesn't exist in the data, DO NOT create a slide for it
+6. The CALCULATED_TOTALS section contains accurate sums - USE THESE VALUES DIRECTLY
+
+## CRITICAL: Category-Specific Rules
+The data category is: ${category.toUpperCase()}
+
+${category === 'food' ? `### FOOD DATA RULES (MUST FOLLOW):
+- All calorie/kcal values are FOOD CONSUMED (eaten), NOT exercise/burned
+- NEVER use phrases like "burned", "burnt", "ran off", "exercised away"
+- NEVER compare to marathons, running, cycling, or any physical activity
+- USE phrases like "consumed", "eaten", "enjoyed", "devoured", "indulged in"
+- GOOD comparisons: "Enough protein to build a small muscle car", "Carbs equivalent to X loaves of bread"
+- BAD comparisons: "Burned enough to run 54 marathons" (THIS IS WRONG FOR FOOD DATA)
+` : ''}
+${category === 'fitness' ? `### FITNESS DATA RULES:
+- Calories here ARE burned through exercise
+- You CAN compare to running, cycling, climbing, etc.
+` : ''}
 
 ## Your Task
 1. Analyse the data to find the most interesting patterns, trends, and insights
@@ -64,7 +97,7 @@ IMPORTANT:
 - Include at least 2 stat slides with big numbers
 - Include at least 1 chart slide (bar, line, or pie)
 - Include at least 1 list slide (top items, rankings)
-- Add fun comparisons where possible (e.g., "That's enough to circle the Earth 3 times!")
+- Add fun comparisons where possible (but respect category rules above!)
 - End with a summary slide highlighting key achievements
 - Include at least 1 quote slide with an insightful observation
 

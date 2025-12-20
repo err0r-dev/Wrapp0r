@@ -7,18 +7,22 @@ export const DataCategorySchema = z.enum([
   'food',
   'finance',
   'productivity',
+  'entertainment',
+  'gaming',
   'other',
 ]);
 
 export type DataCategory = z.infer<typeof DataCategorySchema>;
 
 export const DATA_CATEGORIES = [
-  { id: 'fitness' as const, label: 'Fitness & Health', icon: 'Activity', examples: 'Strava, MyFitnessPal, Apple Health' },
+  { id: 'fitness' as const, label: 'Fitness & Health', icon: 'Activity', examples: 'Strava, Garmin, Fitbit, Whoop' },
   { id: 'music' as const, label: 'Music & Listening', icon: 'Music', examples: 'Spotify, Last.fm, Apple Music' },
-  { id: 'food' as const, label: 'Food & Nutrition', icon: 'UtensilsCrossed', examples: 'MyFitnessPal, meal logs, recipes' },
-  { id: 'finance' as const, label: 'Finance & Spending', icon: 'DollarSign', examples: 'Bank exports, budgets, expenses' },
-  { id: 'productivity' as const, label: 'Productivity & Work', icon: 'Briefcase', examples: 'Time tracking, tasks, projects' },
-  { id: 'other' as const, label: 'Other', icon: 'FileSpreadsheet', examples: 'Any data you want to visualize!' },
+  { id: 'food' as const, label: 'Food & Nutrition', icon: 'UtensilsCrossed', examples: 'MyFitnessPal, Cronometer, Noom' },
+  { id: 'finance' as const, label: 'Finance & Spending', icon: 'DollarSign', examples: 'Bank exports, Mint, YNAB' },
+  { id: 'productivity' as const, label: 'Productivity & Work', icon: 'Briefcase', examples: 'Jira, Linear, GitHub, LinkedIn' },
+  { id: 'entertainment' as const, label: 'Entertainment', icon: 'Film', examples: 'Letterboxd, Goodreads, IMDb' },
+  { id: 'gaming' as const, label: 'Gaming', icon: 'Gamepad2', examples: 'Steam, PlayStation, Xbox' },
+  { id: 'other' as const, label: 'Other', icon: 'FileSpreadsheet', examples: 'Any data you want to visualise!' },
 ] as const;
 
 // OpenAI model selection
