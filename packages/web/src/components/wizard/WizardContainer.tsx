@@ -92,7 +92,7 @@ export function WizardContainer({
       case 0:
         return {
           title: 'Upload your data',
-          subtitle: 'Drop an Excel, CSV, or JSON file',
+          subtitle: undefined,
         };
       case 1:
         return {

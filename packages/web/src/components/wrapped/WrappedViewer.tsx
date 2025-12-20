@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Video, Palette, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Video, Palette, AlertTriangle, Download } from 'lucide-react';
 import type { WrappedExperience, ColorTheme, DecorativeElement, MusicMood } from '@wrapp0r/shared';
 import { CATEGORY_THEMES, type CategoryTheme } from '@wrapp0r/shared';
 import { SlideRenderer } from './SlideRenderer';
@@ -64,6 +64,8 @@ export function WrappedViewer({
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
   const [showValidationWarning, setShowValidationWarning] = useState(validationWarnings.length > 0);
+  const [hasExported, setHasExported] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   // Always use light themes - match by primary color or default to food theme
   const getInitialTheme = (): { theme: ColorTheme; decoration: DecorativeElement } => {
@@ -142,16 +144,30 @@ export function WrappedViewer({
     }
   }, [audioEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle close - immediately close
-  const handleClose = () => {
-    console.log('handleClose called, onClose:', !!onClose);
+  // Handle close with export warning
+  const handleCloseAttempt = useCallback(() => {
+    if (!hasExported && enableVideoExport) {
+      setShowCloseConfirm(true);
+    } else {
+      handleConfirmClose();
+    }
+  }, [hasExported, enableVideoExport]);
+
+  // Actually close the viewer
+  const handleConfirmClose = useCallback(() => {
     if (audio.isPlaying) {
       audio.pause();
     }
+    setShowCloseConfirm(false);
     if (onClose) {
       onClose();
     }
-  };
+  }, [audio, onClose]);
+
+  // Handle export callback
+  const handleExportComplete = useCallback(() => {
+    setHasExported(true);
+  }, []);
 
   // Calculate swipe offset for visual feedback
   const swipeOffset = swipeState.isSwiping ? swipeState.deltaX * 0.3 : 0;
@@ -161,7 +177,7 @@ export function WrappedViewer({
       {/* Backdrop - click to close */}
       <div
         className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-        onClick={handleClose}
+        onClick={handleCloseAttempt}
       >
         {/* Content container - 90% of screen */}
         <div
@@ -325,7 +341,7 @@ export function WrappedViewer({
                   size="icon"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleClose();
+                    handleCloseAttempt();
                   }}
                   style={{ color: currentTheme.text }}
                   className={`drop-shadow-sm ${currentTheme.text === '#FFFFFF' ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
@@ -511,10 +527,68 @@ export function WrappedViewer({
           wrapped={wrapped}
           isOpen={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
+          onExportComplete={handleExportComplete}
           currentAudioUrl={audio.currentTrack?.originalUrl}
           currentTheme={currentTheme}
         />
       )}
+
+      {/* Close confirmation dialog */}
+      <AnimatePresence>
+        {showCloseConfirm && (
+          <motion.div
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowCloseConfirm(false)}
+          >
+            <motion.div
+              className="relative w-full max-w-sm overflow-hidden rounded-xl bg-zinc-900 p-6 shadow-2xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Save your wrapped?</h3>
+                  <p className="text-sm text-white/60">
+                    You haven't exported your video yet
+                  </p>
+                </div>
+              </div>
+
+              <p className="mb-6 text-sm text-white/70">
+                If you close now, you'll need to regenerate your wrapped to export it as a video.
+              </p>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleConfirmClose}
+                >
+                  Close anyway
+                </Button>
+                <Button
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    setShowCloseConfirm(false);
+                    setIsExportModalOpen(true);
+                  }}
+                >
+                  <Download className="h-4 w-4" />
+                  Export video
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>,
     document.body
   );

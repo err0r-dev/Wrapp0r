@@ -7,11 +7,13 @@ import { WrappedViewer } from '@/components/wrapped/WrappedViewer';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { WizardContainer } from '@/components/wizard';
 import { SettingsModal } from '@/components/SettingsModal';
+import { useSplash } from '@/App';
 import type { DataCategory, WrappedExperience } from '@wrapp0r/shared';
 import type { ParsedFile } from '@/components/upload/FileDropzone';
 
 export function HomePage() {
   const { hasApiKey, settings } = useSettings();
+  const { setShowSplash } = useSplash();
   const [file, setFile] = useState<ParsedFile | null>(null);
   const [fileData, setFileData] = useState<ArrayBuffer | null>(null);
   const [category, setCategory] = useState<DataCategory | null>(null);
@@ -87,8 +89,13 @@ export function HomePage() {
 
   const handleCloseViewer = useCallback(() => {
     setWrappedResult(null);
+    setFile(null);
+    setFileData(null);
+    setCategory(null);
+    setCustomDescription('');
     reset();
-  }, [reset]);
+    setShowSplash(true);
+  }, [reset, setShowSplash]);
 
   const handleRetry = useCallback(() => {
     clearError();

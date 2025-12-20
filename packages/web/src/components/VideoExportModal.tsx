@@ -25,6 +25,7 @@ interface VideoExportModalProps {
   wrapped: WrappedExperience;
   isOpen: boolean;
   onClose: () => void;
+  onExportComplete?: () => void;
   currentAudioUrl?: string;
   currentTheme?: ColorTheme;
 }
@@ -32,7 +33,7 @@ interface VideoExportModalProps {
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl, currentTheme }: VideoExportModalProps) {
+export function VideoExportModal({ wrapped, isOpen, onClose, onExportComplete, currentAudioUrl, currentTheme }: VideoExportModalProps) {
   const [selectedPreset, setSelectedPreset] = useState<ExportPreset>(defaultPreset);
   const modalRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -68,6 +69,13 @@ export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl, cu
       setSelectedPreset(defaultPreset);
     }
   }, [isOpen]);
+
+  // Notify parent when export is complete
+  useEffect(() => {
+    if (status === 'complete' && onExportComplete) {
+      onExportComplete();
+    }
+  }, [status, onExportComplete]);
 
   // Focus trap
   useEffect(() => {

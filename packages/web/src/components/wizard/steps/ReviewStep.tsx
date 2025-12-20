@@ -1,4 +1,4 @@
-import { AlertTriangle, FileSpreadsheet, Tag, MessageSquare, Clock, Settings } from 'lucide-react';
+import { AlertTriangle, FileSpreadsheet, Tag, MessageSquare, Clock, Settings, Sparkles, Video, Music, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DATA_CATEGORIES, type DataCategory } from '@wrapp0r/shared';
 import type { ParsedFile } from '@/components/upload/FileDropzone';
@@ -100,10 +100,28 @@ export function ReviewStep({
         </div>
       </div>
 
-      {/* What happens next */}
-      <p className="text-center text-xs text-muted-foreground">
-        We'll analyse your data and create a personalised wrapped experience
-      </p>
+      {/* What you'll get */}
+      <div className="rounded-lg border bg-card/50 p-4">
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">What you'll get</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-2 text-sm">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span>8-12 personalised slides</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Palette className="h-4 w-4 text-primary" />
+            <span>Custom theme</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Music className="h-4 w-4 text-primary" />
+            <span>Background music</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Video className="h-4 w-4 text-primary" />
+            <span>Export as video</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
