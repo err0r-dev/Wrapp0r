@@ -1,220 +1,254 @@
 # Wrapp0r
 
-Transform any Excel or CSV data into beautiful "Spotify Wrapped"-style video presentations using AI.
+Transform any spreadsheet into a Spotify Wrapped-style video presentation using AI.
+
+Upload your data. Let AI craft your story. Export a shareable video.
+
+---
 
 ## Features
 
-- **Universal Data Support**: Upload fitness logs, music history, finances, productivity data, or any structured spreadsheet
-- **AI-Powered Narratives**: OpenAI GPT-4o analyses your data and generates personalised, engaging story slides
-- **Animated Presentations**: Smooth Framer Motion animations with multiple slide types (stats, charts, lists, comparisons)
-- **Video Export**: Server-side rendering with Remotion generates downloadable MP4 videos
-- **Mood-Based Audio**: Background music matched to your data theme (energetic, chill, dramatic, etc.)
-- **Dark/Light Mode**: Full theme support with system preference detection
-- **Responsive Design**: Works across desktop and mobile browsers
+- **Universal Data Support** — Works with fitness logs, music history, spending records, productivity stats, gaming achievements, and more
+- **AI-Powered Storytelling** — GPT-4o analyses your data and generates personalised insights with animated slides
+- **Video Export** — Download as MP4 in multiple formats (landscape, portrait, square) up to 4K
+- **Smart Category Detection** — Automatically identifies your data type from column headers
+- **Animated Presentations** — 7 slide types with smooth Framer Motion animations
+- **Background Music** — Mood-matched audio tracks via Pixabay and Jamendo APIs
+- **Theme System** — Category-specific colour schemes with WCAG AA accessibility compliance
+- **Cross-Platform** — Web app plus native desktop apps for macOS, Windows, and Linux
+- **Mobile-First** — Touch navigation with swipe gestures and responsive design
+- **Accessibility** — Keyboard navigation, reduced motion support, screen reader labels
 
-## Tech Stack
+---
 
-### Frontend (`packages/web`)
-- **React 18** with TypeScript
-- **Vite** for development and production builds
-- **Tailwind CSS** with custom theming
-- **Framer Motion** for slide animations
-- **Remotion** for video composition and preview
-- **Recharts** for data visualizations
-- **SheetJS (xlsx)** for Excel/CSV parsing
-- **Lucide React** for icons
+## Quick Start
 
-### Backend (`packages/server`)
-- **Node.js** with Express
-- **OpenAI API** for AI-powered slide generation
-- **Remotion Renderer** for server-side video rendering
-- **Puppeteer** for headless Chrome (pre-bundled at install time)
-- **Zod** for request validation
+```bash
+# Install dependencies
+pnpm install
 
-### Shared (`packages/shared`)
-- **TypeScript** type definitions
-- **Zod schemas** for data validation
-- Shared between frontend and backend
+# Build all packages (required first time)
+pnpm build
 
-### Infrastructure
-- **Turborepo** for monorepo management
-- **pnpm** for package management
-- **Docker** for containerized deployment
+# Start development servers
+pnpm dev:webapp
+```
+
+Open http://localhost:5173 and add your OpenAI API key in settings.
+
+---
+
+## Supported Data
+
+| Category | Example Sources |
+| -------- | --------------- |
+| Fitness & Health | Strava, Garmin, Fitbit, Whoop, Apple Health |
+| Music & Listening | Spotify, Last.fm, Apple Music, YouTube Music |
+| Food & Nutrition | MyFitnessPal, Cronometer, Noom, meal logs |
+| Finance & Spending | Bank exports, Mint, YNAB, expense trackers |
+| Productivity & Work | Jira, Linear, GitHub, Trello, LinkedIn |
+| Entertainment | Letterboxd, Goodreads, IMDb, TV Time |
+| Gaming | Steam, PlayStation, Xbox, Nintendo |
+| Other | Any structured spreadsheet data |
+
+**Supported file formats:** Excel (.xlsx, .xls), CSV, JSON
+
+**Limits:** 10MB max file size, 5000+ rows triggers a warning
+
+---
+
+## How It Works
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Upload    │ → │  Categorise │ → │   Generate  │ → │   Export    │
+│  your file  │    │  your data  │    │   wrapped   │    │   video     │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+```
+
+1. **Upload** — Drop an Excel, CSV, or JSON file
+2. **Categorise** — Select data type or let AI auto-detect from headers
+3. **Generate** — AI analyses your data and creates 8-12 personalised slides
+4. **Preview** — Navigate through animated slides with keyboard, mouse, or swipe
+5. **Export** — Download as MP4 video to share
+
+---
 
 ## Project Structure
 
 ```
-wrapp0r/
-├── packages/
-│   ├── web/                    # React frontend
-│   │   ├── src/
-│   │   │   ├── components/     # UI components
-│   │   │   │   ├── ui/         # Base UI (button, card, input, etc.)
-│   │   │   │   ├── layout/     # Header, ThemeProvider
-│   │   │   │   ├── upload/     # FileDropzone, CategorySelect
-│   │   │   │   └── wrapped/    # Slide components and viewer
-│   │   │   ├── hooks/          # Custom React hooks
-│   │   │   ├── lib/            # Utilities and helpers
-│   │   │   ├── pages/          # Page components
-│   │   │   ├── remotion/       # Remotion video compositions
-│   │   │   │   └── slides/     # Video slide components
-│   │   │   └── assets/         # Static assets and audio
-│   │   └── remotion.config.ts  # Remotion bundler configuration
-│   │
-│   ├── server/                 # Express backend
-│   │   ├── src/
-│   │   │   ├── routes/         # API endpoints (generate, render)
-│   │   │   ├── services/       # Business logic (OpenAI, etc.)
-│   │   │   └── middleware/     # Express middleware
-│   │   └── remotion-bundle/    # Pre-bundled Remotion compositions (generated)
-│   │
-│   ├── shared/                 # Shared TypeScript types
-│   │   └── src/
-│   │       └── types/          # Zod schemas and type definitions
-│   │
-│   └── electron/               # Desktop app (future)
+packages/
+├── web/        # React frontend (Vite + Tailwind + Framer Motion)
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── wizard/      # 3-step upload wizard
+│   │   │   ├── wrapped/     # Slide viewer and renderer
+│   │   │   ├── upload/      # File dropzone and category select
+│   │   │   └── splash/      # Animated splash screen
+│   │   ├── hooks/           # useVideoExport, useAudioPlayer, etc.
+│   │   ├── remotion/        # Video composition components
+│   │   └── pages/           # HomePage, GuidePage
+│   └── ...
 │
-├── docker/                     # Docker configuration
-├── turbo.json                  # Turborepo configuration
-└── pnpm-workspace.yaml         # pnpm workspace configuration
+├── server/     # Express API + video renderer
+│   └── src/
+│       ├── routes/          # generate, render, music, health
+│       └── services/        # OpenAI prompts, Remotion, music APIs
+│
+├── shared/     # TypeScript types and schemas
+│   └── src/
+│       ├── types/           # Zod schemas for slides, API, settings
+│       └── themes/          # Category colour themes
+│
+└── electron/   # Desktop app wrapper
+    └── src/
+        ├── main.ts          # Window management, menus
+        └── preload.ts       # Secure IPC bridge
 ```
 
-## Getting Started
+---
 
-### Prerequisites
+## Development
+
+```bash
+pnpm dev:webapp     # Frontend + backend (recommended)
+pnpm dev:web        # Frontend only (port 5173)
+pnpm dev:server     # Backend only (port 3001)
+pnpm build          # Build all packages
+pnpm build:electron # Build desktop apps
+```
+
+---
+
+## Slide Types
+
+| Type | Description |
+| ---- | ----------- |
+| **Title** | Opening slide with headline, subtitle, year, emoji |
+| **Stat** | Large animated number with label, suffix, comparison |
+| **Chart** | Bar, line, pie, donut, or area chart visualisation |
+| **List** | Ranked items with emoji (grid, horizontal, or ranked layout) |
+| **Comparison** | 2-4 metrics displayed side-by-side |
+| **Quote** | Highlighted insight or observation about your data |
+| **Summary** | Closing slide with key highlights and message |
+
+Each slide supports custom duration, animation style (fade, slide, scale, bounce), and themed backgrounds.
+
+---
+
+## Video Export
+
+| Preset | Resolution | Aspect Ratio | Best For |
+| ------ | ---------- | ------------ | -------- |
+| 720p HD | 1280 × 720 | 16:9 | Web sharing |
+| 1080p Full HD | 1920 × 1080 | 16:9 | Standard quality |
+| 4K Ultra HD | 3840 × 2160 | 16:9 | Professional |
+| Vertical HD | 1080 × 1920 | 9:16 | TikTok, Reels, Stories |
+| Square HD | 1080 × 1080 | 1:1 | Instagram Feed |
+
+Video rendering is performed server-side using Remotion and Puppeteer.
+
+---
+
+## API Reference
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| POST | `/api/generate` | Generate wrapped content (SSE streaming) |
+| POST | `/api/render` | Render video, returns MP4 stream |
+| GET | `/api/render/progress/:id` | Render progress updates (SSE) |
+| POST | `/api/render/cancel/:id` | Cancel active render |
+| GET | `/api/music/:mood` | Fetch background track by mood |
+| GET | `/api/music` | List available music moods |
+| GET | `/api/health` | Health check |
+
+**Music moods:** energetic, chill, upbeat, dramatic, warm, professional
+
+---
+
+## Configuration
+
+### Server Environment Variables
+
+| Variable | Description | Default |
+| -------- | ----------- | ------- |
+| `PORT` | Server port | 3001 |
+| `NODE_ENV` | Environment | development |
+| `CORS_ORIGIN` | Allowed origins | localhost:5173 |
+| `PIXABAY_API_KEY` | Pixabay Music API key | — |
+| `JAMENDO_CLIENT_ID` | Jamendo API client ID | — |
+
+### Client Settings (localStorage)
+
+- **OpenAI API Key** — Required for generation
+- **AI Model** — gpt-4o (recommended), gpt-4o-mini, o1, o1-mini, o1-pro
+- **Pixabay API Key** — Optional, for music in preview
+- **Theme** — Light, dark, or system preference
+
+---
+
+## AI Models
+
+| Model | Type | Speed | Cost | Best For |
+| ----- | ---- | ----- | ---- | -------- |
+| gpt-4o | Standard | Fast | $$ | Recommended for most users |
+| gpt-4o-mini | Standard | Fastest | $ | Budget-friendly option |
+| o1-mini | Reasoning | Medium | $$ | Complex data patterns |
+| o1 | Reasoning | Slower | $$$ | Advanced analysis |
+| o1-pro | Reasoning | Slowest | $$$$ | Maximum capability |
+
+Reasoning models (o1 series) provide deeper analysis but don't support streaming.
+
+---
+
+## Tech Stack
+
+### Frontend
+- React 18 with TypeScript
+- Vite for development and builds
+- Tailwind CSS for styling
+- Framer Motion for animations
+- Remotion for video composition
+- Recharts for data visualisation
+- SheetJS for Excel/CSV parsing
+
+### Backend
+- Node.js with Express
+- OpenAI SDK for AI generation
+- Remotion Renderer for video export
+- Puppeteer for headless Chrome
+- Zod for schema validation
+
+### Desktop
+- Electron for native apps
+- electron-builder for distribution
+
+### Infrastructure
+- Turborepo for monorepo management
+- pnpm for package management
+- Docker for containerised deployment
+
+---
+
+## Docker
+
+```bash
+cd docker
+docker-compose up -d
+```
+
+Access at http://localhost
+
+---
+
+## Requirements
 
 - Node.js 20+
 - pnpm 9+
 - OpenAI API key
 
-### Installation
+---
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/wrapp0r.git
-cd wrapp0r
+## Licence
 
-# Install dependencies (includes Chromium for video rendering)
-pnpm install
-
-# Build all packages (required before first run)
-pnpm build
-```
-
-> **Note:** The `pnpm build` step compiles the shared TypeScript types and bundles the Remotion video compositions. This is required before running the development server for the first time. Subsequent runs only need `pnpm dev:webapp`.
-
-### Development
-
-```bash
-# Start both frontend and backend
-pnpm dev:webapp
-
-# Or start individually
-pnpm dev:web      # Frontend on http://localhost:5173
-pnpm dev:server   # Backend on http://localhost:3001
-```
-
-### Production Build
-
-```bash
-# Build all packages (includes Remotion bundle)
-pnpm build
-
-# Build individually
-pnpm build:web     # Builds Remotion bundle + Vite production build
-pnpm build:server  # Compiles TypeScript
-```
-
-### Docker Deployment
-
-```bash
-cd docker
-docker-compose up -d
-
-# Access at http://localhost
-```
-
-## How It Works
-
-1. **Upload**: Drag and drop an Excel (.xlsx) or CSV file
-2. **Categorize**: Select the data type (fitness, music, finance, etc.) or let AI detect it
-3. **Generate**: AI analyses your data and creates a personalised wrapped experience with 8-12 slides
-4. **Preview**: Navigate through animated slides with swipe gestures or keyboard
-5. **Export**: Download as an MP4 video to share
-
-## API Endpoints
-
-### `POST /api/generate`
-Generate wrapped slides from uploaded data.
-
-**Request:**
-```json
-{
-  "data": "parsed spreadsheet data",
-  "category": "fitness",
-  "apiKey": "sk-..."
-}
-```
-
-**Response:**
-```json
-{
-  "wrapped": {
-    "title": "Your 2024 Fitness Wrapped",
-    "theme": { ... },
-    "slides": [ ... ],
-    "musicMood": "energetic"
-  }
-}
-```
-
-### `POST /api/render`
-Render wrapped experience to MP4 video.
-
-**Request:**
-```json
-{
-  "wrapped": { ... }
-}
-```
-
-**Response:** Binary MP4 file stream
-
-## Configuration
-
-### Environment Variables
-
-**Server:**
-- `PORT` - Server port (default: 3001)
-- `NODE_ENV` - Environment (development/production)
-- `CORS_ORIGIN` - Allowed CORS origins
-
-### Client Settings (stored in localStorage)
-- OpenAI API key
-- Preferred AI model (GPT-4o / GPT-4o-mini)
-- Theme preference (light/dark/system)
-
-## Slide Types
-
-| Type | Description |
-|------|-------------|
-| `title` | Opening slide with headline and subtitle |
-| `stat` | Single large statistic with optional icon |
-| `chart` | Bar, line, or pie chart visualization |
-| `list` | Ranked or bullet list of items |
-| `comparison` | Side-by-side metric comparison |
-| `quote` | Highlighted insight or fun fact |
-| `summary` | Closing slide with key highlights |
-
-## Video Export Architecture
-
-Video export uses server-side rendering for reliable, high-quality output:
-
-1. **Remotion Bundle**: Compositions are pre-bundled during `pnpm build:web`
-2. **Puppeteer**: Chrome is pre-installed via puppeteer at `npm install` time (no runtime download)
-3. **Server Rendering**: The `/api/render` endpoint uses `@remotion/renderer` to generate MP4
-4. **Streaming Response**: Video is streamed directly to the client for download
-
-## License
-
-MIT
+[ERR0R.DEV OPEN USE LICENSE](https://github.com/err0r-dev/.github/blob/main/profile/license.md)
