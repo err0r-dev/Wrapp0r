@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from './ThemeProvider';
 import { useState } from 'react';
 import { SettingsModal } from '@/components/SettingsModal';
+import { useSplash } from '@/App';
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { setShowSplash } = useSplash();
 
   const ThemeIcon = theme === 'light' ? Sun : Moon;
 
@@ -16,12 +18,15 @@ export function Header() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSplash(true)}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
                 W
               </div>
               <span className="text-lg font-semibold">Wrapp0r</span>
-            </Link>
+            </button>
             <nav className="hidden sm:flex items-center gap-1">
               <Link to="/guide">
                 <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">

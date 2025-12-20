@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
@@ -7,6 +7,20 @@ import { SplashScreen } from '@/components/SplashScreen';
 import { Header } from '@/components/layout/Header';
 import { HomePage } from '@/pages/HomePage';
 import { GuidePage } from '@/pages/GuidePage';
+
+// Context to control splash screen visibility from anywhere
+interface SplashContextType {
+  showSplash: boolean;
+  setShowSplash: (show: boolean) => void;
+}
+
+const SplashContext = createContext<SplashContextType | null>(null);
+
+export function useSplash() {
+  const ctx = useContext(SplashContext);
+  if (!ctx) throw new Error('useSplash must be used within SplashContext.Provider');
+  return ctx;
+}
 
 function AppContent() {
   return (
@@ -25,26 +39,19 @@ function AppContent() {
 function App() {
   const [showSplash, setShowSplash] = useState(true);
 
-  useEffect(() => {
-    // Show splash screen for 2.5 seconds
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <BrowserRouter>
       <ThemeProvider>
         <SettingsProvider>
-          <AnimatePresence mode="wait">
-            {showSplash ? (
-              <SplashScreen key="splash" onComplete={() => setShowSplash(false)} />
-            ) : (
-              <AppContent key="main" />
-            )}
-          </AnimatePresence>
+          <SplashContext.Provider value={{ showSplash, setShowSplash }}>
+            <AnimatePresence mode="wait">
+              {showSplash ? (
+                <SplashScreen key="splash" onContinue={() => setShowSplash(false)} />
+              ) : (
+                <AppContent key="main" />
+              )}
+            </AnimatePresence>
+          </SplashContext.Provider>
         </SettingsProvider>
       </ThemeProvider>
     </BrowserRouter>
