@@ -273,9 +273,24 @@ Edit `web/src/lib/export-presets.ts`:
 ## Deployment Notes
 
 ### Docker
-The `docker/` directory contains Docker Compose configuration. The server requires:
-- Puppeteer with Chrome (for Remotion rendering)
-- Sufficient memory for video encoding (recommend 4GB+)
+The `docker/` directory contains full Docker deployment:
+- `docker-compose.yml` - Development configuration
+- `docker-compose.prod.yml` - Production with resource limits
+- `Dockerfile.web` - Nginx frontend (serves at port 80)
+- `Dockerfile.server` - Node.js API with Chromium (port 3001)
+- `nginx.conf` - Proxy config routing `/api/*` to server
+- `DOCKER.md` - Full deployment documentation
+
+**Requirements:**
+- Server container needs 2GB+ RAM for video rendering
+- Chromium is installed in the server image for Puppeteer/Remotion
+- Frontend uses `VITE_API_URL=""` so API calls use relative `/api` paths
+
+**Quick start:**
+```bash
+cd docker && docker compose build && docker compose up -d
+```
+Access at http://localhost
 
 ### Remotion Bundle
 The web package bundles Remotion compositions to `server/remotion-bundle/` during build:

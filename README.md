@@ -1,8 +1,22 @@
 # Wrapp0r
 
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white)
+![Remotion](https://img.shields.io/badge/Remotion-4-FF6B6B)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
+![Vibe Coded](https://img.shields.io/badge/Vibe_Coded-Claude-CC785C?logo=anthropic&logoColor=white)
+[![License](https://img.shields.io/badge/License-err0r.dev-purple)](https://github.com/err0r-dev/.github/blob/main/profile/license.md)
+
 Transform any spreadsheet into a Spotify Wrapped-style video presentation using AI.
 
 Upload your data. Let AI craft your story. Export a shareable video.
+
+> **New to coding?** Check out the [Non-Techie Setup Guide](Non%20Techie%20Readme.md) for step-by-step instructions.
+>
+> **AI assistant?** See [AI.md](AI.md) for codebase context and architecture details.
 
 ---
 
@@ -77,33 +91,38 @@ Open http://localhost:5173 and add your OpenAI API key in settings.
 ## Project Structure
 
 ```
-packages/
-├── web/        # React frontend (Vite + Tailwind + Framer Motion)
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── wizard/      # 3-step upload wizard
-│   │   │   ├── wrapped/     # Slide viewer and renderer
-│   │   │   ├── upload/      # File dropzone and category select
-│   │   │   └── splash/      # Animated splash screen
-│   │   ├── hooks/           # useVideoExport, useAudioPlayer, etc.
-│   │   ├── remotion/        # Video composition components
-│   │   └── pages/           # HomePage, GuidePage
-│   └── ...
+.
+├── AI.md                    # AI assistant context guide
+├── README.md                # This file
+├── Non Techie Readme.md     # Beginner setup guide
 │
-├── server/     # Express API + video renderer
-│   └── src/
-│       ├── routes/          # generate, render, music, health
-│       └── services/        # OpenAI prompts, Remotion, music APIs
+├── docker/                  # Docker deployment
+│   ├── DOCKER.md            # Docker documentation
+│   ├── docker-compose.yml   # Development config
+│   └── Dockerfile.*         # Container definitions
 │
-├── shared/     # TypeScript types and schemas
-│   └── src/
-│       ├── types/           # Zod schemas for slides, API, settings
-│       └── themes/          # Category colour themes
-│
-└── electron/   # Desktop app wrapper
-    └── src/
-        ├── main.ts          # Window management, menus
-        └── preload.ts       # Secure IPC bridge
+└── packages/
+    ├── web/                 # React frontend (Vite + Tailwind + Framer Motion)
+    │   └── src/
+    │       ├── components/  # wizard, wrapped, upload, splash
+    │       ├── hooks/       # useVideoExport, useAudioPlayer, etc.
+    │       ├── remotion/    # Video composition components
+    │       └── pages/       # HomePage, GuidePage
+    │
+    ├── server/              # Express API + video renderer
+    │   └── src/
+    │       ├── routes/      # generate, render, music, health
+    │       └── services/    # OpenAI prompts, Remotion, music APIs
+    │
+    ├── shared/              # TypeScript types and schemas
+    │   └── src/
+    │       ├── types/       # Zod schemas for slides, API, settings
+    │       └── themes/      # Category colour themes
+    │
+    └── electron/            # Desktop app wrapper
+        └── src/
+            ├── main.ts      # Window management, menus
+            └── preload.ts   # Secure IPC bridge
 ```
 
 ---
