@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, MousePointerClick } from 'lucide-react';
 import { DataRibbons } from './splash/DataRibbons';
 import { FloatingData } from './splash/FloatingData';
 import { DataVortex } from './splash/DataVortex';
@@ -193,28 +193,19 @@ export function SplashScreen({ onContinue }: SplashScreenProps) {
           </motion.p>
         </motion.div>
 
-        {/* Subtle hint arrow */}
+        {/* Mouse click hint */}
         <motion.div
           className="mt-4"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3, y: [0, 8, 0] }}
+          animate={{ opacity: 0.4, scale: [1, 1.1, 1] }}
           transition={{
             opacity: { delay: 2.2, duration: 0.5 },
-            y: { delay: 2.2, duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
+            scale: { delay: 2.2, duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
           }}
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke={isDark ? 'white' : '#1a1a2e'}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 5v14M5 12l7 7 7-7" />
-          </svg>
+          <MousePointerClick
+            className={`h-6 w-6 ${isDark ? 'text-white' : 'text-gray-800'}`}
+          />
         </motion.div>
       </div>
 
