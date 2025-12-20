@@ -1,10 +1,17 @@
-version: '3.8'
-
-# Production docker-compose configuration
+# Wrapp0r Production Docker Compose
 # Usage: docker compose -f docker/docker-compose.prod.yml up -d
+#
+# This configuration includes:
+# - Resource limits for production stability
+# - Log rotation
+# - Cache optimization
+# - HTTPS support (requires SSL certificates)
+
+name: wrapp0r
 
 services:
   web:
+    container_name: wrapp0r-web
     image: wrapp0r/web:latest
     build:
       context: ..
@@ -35,6 +42,7 @@ services:
         max-file: "3"
 
   server:
+    container_name: wrapp0r-server
     image: wrapp0r/server:latest
     build:
       context: ..
@@ -50,14 +58,15 @@ services:
     restart: always
     networks:
       - wrapp0r-network
+    # Video rendering (Remotion + Chromium) requires more resources
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 512M
+          cpus: '2'
+          memory: 4G
         reservations:
-          cpus: '0.25'
-          memory: 128M
+          cpus: '0.5'
+          memory: 1G
     logging:
       driver: "json-file"
       options:
@@ -66,4 +75,5 @@ services:
 
 networks:
   wrapp0r-network:
+    name: wrapp0r-network
     driver: bridge

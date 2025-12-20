@@ -1,7 +1,16 @@
-version: '3.8'
+# Wrapp0r Docker Compose
+# Usage: docker compose -f docker/docker-compose.yml up -d
+#
+# This will create:
+# - wrapp0r-web: Frontend (nginx) on port 80
+# - wrapp0r-server: API server on port 3001
+
+name: wrapp0r
 
 services:
   web:
+    container_name: wrapp0r-web
+    image: wrapp0r/web:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile.web
@@ -15,6 +24,8 @@ services:
       - wrapp0r-network
 
   server:
+    container_name: wrapp0r-server
+    image: wrapp0r/server:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile.server
@@ -27,7 +38,15 @@ services:
     restart: unless-stopped
     networks:
       - wrapp0r-network
+    # Video rendering requires more resources
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
 
 networks:
   wrapp0r-network:
+    name: wrapp0r-network
     driver: bridge

@@ -234,10 +234,28 @@ Reasoning models (o1 series) provide deeper analysis but don't support streaming
 
 ```bash
 cd docker
-docker-compose up -d
+cp .env.example .env
+docker compose build
+docker compose up -d
 ```
 
+This creates two containers:
+- `wrapp0r-web` — Nginx frontend on port 80
+- `wrapp0r-server` — Node.js API with video rendering on port 3001
+
 Access at http://localhost
+
+**Custom ports:**
+```bash
+WEB_PORT=8080 SERVER_PORT=3002 docker compose up -d
+```
+
+**Stop containers:**
+```bash
+docker compose down
+```
+
+See [docker/DOCKER.md](docker/DOCKER.md) for full deployment documentation.
 
 ---
 
