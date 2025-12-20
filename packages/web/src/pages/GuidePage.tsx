@@ -270,16 +270,16 @@ export function GuidePage() {
         transition={{ duration: 0.5 }}
       >
         <Link to="/">
-          <Button variant="ghost" size="sm" className="mb-4 gap-2">
+          <Button variant="ghost" size="sm" className="mb-4 gap-2 text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10">
             <ArrowLeft className="h-4 w-4" />
             Back to Home
           </Button>
         </Link>
 
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
           What Can I Wrap?
         </h1>
-        <p className="mt-2 text-lg text-muted-foreground">
+        <p className="mt-2 text-lg text-gray-600 dark:text-white/70">
           Export data from your favourite apps and create a personalised "Wrapped" experience.
           Here's how to get your data from popular services.
         </p>
@@ -292,14 +292,14 @@ export function GuidePage() {
         transition={{ duration: 0.5, delay: 0.1 }}
       >
         <Tabs defaultValue="fitness" className="w-full">
-          <TabsList className="flex w-full flex-wrap h-auto gap-1 p-1">
+          <TabsList className="flex w-full flex-wrap h-auto gap-1 p-1 bg-black/5 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10">
             {CATEGORY_GUIDES.map((category) => {
               const Icon = category.icon;
               return (
                 <TabsTrigger
                   key={category.id}
                   value={category.id}
-                  className="flex items-center gap-1.5 px-3 py-1.5"
+                  className="flex items-center gap-1.5 px-3 py-1.5 data-[state=active]:bg-black/10 dark:data-[state=active]:bg-white/10 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white text-gray-600 dark:text-white/60"
                 >
                   <Icon className="h-4 w-4" />
                   <span className="hidden sm:inline">{category.name}</span>
@@ -312,15 +312,15 @@ export function GuidePage() {
             const Icon = category.icon;
             return (
               <TabsContent key={category.id} value={category.id}>
-                <Card>
+                <Card className="bg-black/5 dark:bg-white/5 backdrop-blur-xl border-black/10 dark:border-white/10">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20">
                         <Icon className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle>{category.name}</CardTitle>
-                        <CardDescription>{category.description}</CardDescription>
+                        <CardTitle className="text-gray-900 dark:text-white">{category.name}</CardTitle>
+                        <CardDescription className="text-gray-600 dark:text-white/60">{category.description}</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -329,12 +329,12 @@ export function GuidePage() {
                       {category.sources.map((source) => (
                         <div
                           key={source.name}
-                          className="rounded-lg border bg-muted/50 p-4"
+                          className="rounded-lg border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 p-4"
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <h4 className="font-medium">{source.name}</h4>
+                                <h4 className="font-medium text-gray-900 dark:text-white">{source.name}</h4>
                                 {source.url && (
                                   <a
                                     href={source.url}
@@ -346,7 +346,7 @@ export function GuidePage() {
                                   </a>
                                 )}
                               </div>
-                              <p className="mt-1 text-sm text-muted-foreground">
+                              <p className="mt-1 text-sm text-gray-600 dark:text-white/60">
                                 {source.exportMethod}
                               </p>
                             </div>
@@ -371,19 +371,19 @@ export function GuidePage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
       >
-        <Card className="border-primary/30 bg-primary/5">
+        <Card className="border-primary/30 bg-primary/10 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle className="text-lg">Tips for Best Results</CardTitle>
+            <CardTitle className="text-lg text-gray-900 dark:text-white">Tips for Best Results</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-2 text-sm text-gray-700 dark:text-white/80">
             <p>
-              <strong>File format:</strong> CSV, Excel (.xlsx), and JSON files are all supported.
+              <strong className="text-gray-900 dark:text-white">File format:</strong> CSV, Excel (.xlsx), and JSON files are all supported.
             </p>
             <p>
-              <strong>Date range:</strong> For year-end wraps, export data for the full year if possible.
+              <strong className="text-gray-900 dark:text-white">Date range:</strong> For year-end wraps, export data for the full year if possible.
             </p>
             <p>
-              <strong>Column names:</strong> Keep original column names - our AI understands common formats from popular apps.
+              <strong className="text-gray-900 dark:text-white">Column names:</strong> Keep original column names - our AI understands common formats from popular apps.
             </p>
           </CardContent>
         </Card>

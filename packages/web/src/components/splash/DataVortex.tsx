@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 
 interface DataVortexProps {
   mousePos: { x: number; y: number };
+  isDark?: boolean;
 }
 
 // Spotify Wrapped color palette
@@ -39,16 +40,21 @@ function createParticle(width: number, height: number): Particle {
   };
 }
 
-export function DataVortex({ mousePos }: DataVortexProps) {
+export function DataVortex({ mousePos, isDark = true }: DataVortexProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationRef = useRef<number>();
   const mousePosRef = useRef(mousePos);
+  const isDarkRef = useRef(isDark);
 
-  // Keep mouse position ref updated
+  // Keep refs updated
   useEffect(() => {
     mousePosRef.current = mousePos;
   }, [mousePos]);
+
+  useEffect(() => {
+    isDarkRef.current = isDark;
+  }, [isDark]);
 
   const initParticles = useCallback((width: number, height: number) => {
     const particleCount = Math.min(150, Math.floor((width * height) / 8000));
@@ -69,8 +75,10 @@ export function DataVortex({ mousePos }: DataVortexProps) {
     const centerX = width / 2;
     const centerY = height / 2;
 
-    // Clear canvas with slight trail effect
-    ctx.fillStyle = 'rgba(26, 26, 46, 0.15)';
+    // Clear canvas with slight trail effect (theme-aware)
+    ctx.fillStyle = isDarkRef.current
+      ? 'rgba(26, 26, 46, 0.15)'      // Dark purple for dark mode
+      : 'rgba(248, 249, 250, 0.15)';  // Light gray for light mode
     ctx.fillRect(0, 0, width, height);
 
     // Mouse influence (normalized to canvas coords)

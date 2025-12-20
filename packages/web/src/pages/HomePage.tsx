@@ -108,11 +108,11 @@ export function HomePage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
           Transform Your Data Into
           <span className="block text-primary">Something Beautiful</span>
         </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600 dark:text-white/70">
           Upload any Excel file and let AI create a personalized "Wrapped" experience,
           just like Spotify Wrapped but for your data.
         </p>
@@ -125,12 +125,12 @@ export function HomePage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="border-amber-500/50 bg-amber-500/10">
+          <Card className="border-amber-500/30 bg-amber-500/10 backdrop-blur-xl">
             <CardContent className="flex items-center gap-4 p-4">
               <Settings className="h-8 w-8 text-amber-500" />
               <div className="flex-1">
-                <p className="font-medium">OpenAI API Key Required</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-medium text-gray-900 dark:text-white">OpenAI API Key Required</p>
+                <p className="text-sm text-gray-600 dark:text-white/60">
                   Click the settings icon in the header to add your API key before generating.
                 </p>
               </div>
@@ -147,15 +147,15 @@ export function HomePage() {
         transition={{ delay: 0.3 }}
       >
         {/* Step 1: Upload */}
-        <Card className={file ? 'ring-2 ring-primary' : ''}>
+        <Card className={`bg-black/5 dark:bg-white/5 backdrop-blur-xl border-black/10 dark:border-white/10 ${file ? 'ring-2 ring-primary' : ''}`}>
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
                 1
               </div>
-              <CardTitle className="text-lg">Upload Data</CardTitle>
+              <CardTitle className="text-lg text-gray-900 dark:text-white">Upload Data</CardTitle>
             </div>
-            <CardDescription>
+            <CardDescription className="text-gray-600 dark:text-white/60">
               Upload your Excel or CSV file
             </CardDescription>
           </CardHeader>
@@ -165,15 +165,15 @@ export function HomePage() {
         </Card>
 
         {/* Step 2: Categorize */}
-        <Card className={category ? 'ring-2 ring-primary' : ''}>
+        <Card className={`bg-black/5 dark:bg-white/5 backdrop-blur-xl border-black/10 dark:border-white/10 ${category ? 'ring-2 ring-primary' : ''}`}>
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
                 2
               </div>
-              <CardTitle className="text-lg">Describe Data</CardTitle>
+              <CardTitle className="text-lg text-gray-900 dark:text-white">Describe Data</CardTitle>
             </div>
-            <CardDescription>
+            <CardDescription className="text-gray-600 dark:text-white/60">
               What kind of data is this?
             </CardDescription>
           </CardHeader>
@@ -190,15 +190,15 @@ export function HomePage() {
         </Card>
 
         {/* Step 3: Generate */}
-        <Card className={canGenerate ? 'ring-2 ring-primary' : ''}>
+        <Card className={`bg-black/5 dark:bg-white/5 backdrop-blur-xl border-black/10 dark:border-white/10 ${canGenerate ? 'ring-2 ring-primary' : ''}`}>
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
                 3
               </div>
-              <CardTitle className="text-lg">Generate</CardTitle>
+              <CardTitle className="text-lg text-gray-900 dark:text-white">Generate</CardTitle>
             </div>
-            <CardDescription>
+            <CardDescription className="text-gray-600 dark:text-white/60">
               Create your personalized Wrapped
             </CardDescription>
           </CardHeader>
@@ -214,7 +214,7 @@ export function HomePage() {
               <ArrowRight className="h-5 w-5" />
             </Button>
             {!canGenerate && (
-              <p className="mt-4 text-center text-sm text-muted-foreground">
+              <p className="mt-4 text-center text-sm text-gray-500 dark:text-white/50">
                 {!hasApiKey
                   ? 'Add your API key in settings'
                   : !file
@@ -233,26 +233,26 @@ export function HomePage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
       >
-        <div className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+        <div className="text-center rounded-2xl bg-black/5 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 p-6">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
             <Upload className="h-6 w-6 text-primary" />
           </div>
-          <h3 className="font-semibold">Any Data</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="font-semibold text-gray-900 dark:text-white">Any Data</h3>
+          <p className="text-sm text-gray-600 dark:text-white/60">
             Fitness, music, food, finance - any Excel data works
           </p>
         </div>
-        <div className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+        <div className="text-center rounded-2xl bg-black/5 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 p-6">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
             <Sparkles className="h-6 w-6 text-primary" />
           </div>
-          <h3 className="font-semibold">AI-Powered</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="font-semibold text-gray-900 dark:text-white">AI-Powered</h3>
+          <p className="text-sm text-gray-600 dark:text-white/60">
             GPT-4o analyses your data and creates unique insights
           </p>
         </div>
-        <div className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+        <div className="text-center rounded-2xl bg-black/5 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 p-6">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
             <svg
               className="h-6 w-6 text-primary"
               fill="none"
@@ -267,8 +267,8 @@ export function HomePage() {
               />
             </svg>
           </div>
-          <h3 className="font-semibold">Export Video</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="font-semibold text-gray-900 dark:text-white">Export Video</h3>
+          <p className="text-sm text-gray-600 dark:text-white/60">
             Download your Wrapped as a shareable video
           </p>
         </div>

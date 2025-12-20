@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { Sun, Moon } from 'lucide-react';
 import { DataRibbons } from './splash/DataRibbons';
 import { FloatingData } from './splash/FloatingData';
 import { DataVortex } from './splash/DataVortex';
+import { useTheme } from './layout/ThemeProvider';
 
 interface SplashScreenProps {
   onContinue: () => void;
@@ -11,6 +13,8 @@ interface SplashScreenProps {
 export function SplashScreen({ onContinue }: SplashScreenProps) {
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
   const prefersReducedMotion = useReducedMotion();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   // Track normalized mouse position (0-1)
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -38,7 +42,7 @@ export function SplashScreen({ onContinue }: SplashScreenProps) {
   return (
     <motion.div
       className="fixed inset-0 z-50 cursor-pointer overflow-hidden"
-      style={{ backgroundColor: '#1A1A2E' }}
+      style={{ backgroundColor: isDark ? '#1A1A2E' : '#F8F9FA' }}
       onClick={onContinue}
       onMouseMove={handleMouseMove}
       initial={{ opacity: 1 }}
@@ -48,11 +52,30 @@ export function SplashScreen({ onContinue }: SplashScreenProps) {
       tabIndex={0}
       aria-label="Click to continue to Wrapp0r"
     >
+      {/* Theme toggle button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleTheme();
+        }}
+        className={`absolute top-4 right-4 z-50 p-2 rounded-full transition-colors ${
+          isDark
+            ? 'bg-white/10 hover:bg-white/20'
+            : 'bg-black/10 hover:bg-black/20'
+        }`}
+        aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      >
+        {isDark ? (
+          <Sun className="h-5 w-5 text-white" />
+        ) : (
+          <Moon className="h-5 w-5 text-gray-800" />
+        )}
+      </button>
       {/* Layer 1: Animated gradient ribbons */}
       <DataRibbons />
 
       {/* Layer 2: Particle vortex (canvas) */}
-      {!prefersReducedMotion && <DataVortex mousePos={mousePos} />}
+      {!prefersReducedMotion && <DataVortex mousePos={mousePos} isDark={isDark} />}
 
       {/* Layer 3: Floating data elements with parallax */}
       <FloatingData mousePos={mousePos} />
@@ -136,7 +159,7 @@ export function SplashScreen({ onContinue }: SplashScreenProps) {
 
         {/* Brand name */}
         <motion.h1
-          className="mt-8 text-5xl font-bold text-white md:text-6xl"
+          className={`mt-8 text-5xl font-bold md:text-6xl ${isDark ? 'text-white' : 'text-gray-900'}`}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.6, ease: 'easeOut' }}
@@ -146,7 +169,7 @@ export function SplashScreen({ onContinue }: SplashScreenProps) {
 
         {/* Tagline */}
         <motion.p
-          className="mt-3 text-xl text-white/70 md:text-2xl"
+          className={`mt-3 text-xl md:text-2xl ${isDark ? 'text-white/70' : 'text-gray-600'}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.1, duration: 0.5 }}
@@ -162,7 +185,7 @@ export function SplashScreen({ onContinue }: SplashScreenProps) {
           transition={{ delay: 1.8, duration: 0.5 }}
         >
           <motion.p
-            className="text-base text-white/50"
+            className={`text-base ${isDark ? 'text-white/50' : 'text-gray-500'}`}
             animate={{ opacity: [0.4, 0.8, 0.4] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           >
@@ -185,7 +208,7 @@ export function SplashScreen({ onContinue }: SplashScreenProps) {
             height="24"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="white"
+            stroke={isDark ? 'white' : '#1a1a2e'}
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -196,10 +219,10 @@ export function SplashScreen({ onContinue }: SplashScreenProps) {
       </div>
 
       {/* Decorative corner accents */}
-      <div className="absolute left-4 top-4 h-16 w-16 border-l-2 border-t-2 border-white/10 rounded-tl-lg" />
-      <div className="absolute right-4 top-4 h-16 w-16 border-r-2 border-t-2 border-white/10 rounded-tr-lg" />
-      <div className="absolute bottom-4 left-4 h-16 w-16 border-b-2 border-l-2 border-white/10 rounded-bl-lg" />
-      <div className="absolute bottom-4 right-4 h-16 w-16 border-b-2 border-r-2 border-white/10 rounded-br-lg" />
+      <div className={`absolute left-4 top-4 h-16 w-16 border-l-2 border-t-2 rounded-tl-lg ${isDark ? 'border-white/10' : 'border-black/10'}`} />
+      <div className={`absolute right-4 top-4 h-16 w-16 border-r-2 border-t-2 rounded-tr-lg ${isDark ? 'border-white/10' : 'border-black/10'}`} />
+      <div className={`absolute bottom-4 left-4 h-16 w-16 border-b-2 border-l-2 rounded-bl-lg ${isDark ? 'border-white/10' : 'border-black/10'}`} />
+      <div className={`absolute bottom-4 right-4 h-16 w-16 border-b-2 border-r-2 rounded-br-lg ${isDark ? 'border-white/10' : 'border-black/10'}`} />
     </motion.div>
   );
 }
