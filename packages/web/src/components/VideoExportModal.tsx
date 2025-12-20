@@ -15,7 +15,7 @@ import {
 import type { WrappedExperience } from '@wrapp0r/shared';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { useVideoExport } from '@/hooks/useVideoExport';
+import { useVideoExport, formatTimeRemaining } from '@/hooks/useVideoExport';
 import { useSettings } from '@/hooks/useSettings';
 import { exportPresets, defaultPreset, type ExportPreset } from '@/lib/export-presets';
 import { cn } from '@/lib/utils';
@@ -30,7 +30,7 @@ interface VideoExportModalProps {
 export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl }: VideoExportModalProps) {
   const [selectedPreset, setSelectedPreset] = useState<ExportPreset>(defaultPreset);
 
-  const { status, progress, progressMessage, error, exportVideo, reset } = useVideoExport();
+  const { status, progress, progressMessage, estimatedTimeRemaining, error, exportVideo, reset } = useVideoExport();
   const { settings } = useSettings();
 
   // Handle close
@@ -139,11 +139,18 @@ export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl }: 
           <div className="p-6">
             {/* Export in progress */}
             {isExporting && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <Progress value={progress} className="h-2" />
-                <p className="text-center text-sm text-white/50">
-                  {progressMessage || `${progress}%`}
-                </p>
+                <div className="text-center">
+                  <p className="text-sm text-white/70">
+                    {progressMessage || `${progress}%`}
+                  </p>
+                  {estimatedTimeRemaining !== null && (
+                    <p className="mt-1 text-xs text-white/40">
+                      {formatTimeRemaining(estimatedTimeRemaining)}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 

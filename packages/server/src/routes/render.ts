@@ -1,5 +1,5 @@
 import { Router, Request, Response, type IRouter } from 'express';
-import { renderMedia, selectComposition } from '@remotion/renderer';
+import { renderMedia, selectComposition, makeCancelSignal } from '@remotion/renderer';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -30,6 +30,18 @@ const FPS = 30;
 const DEFAULT_WIDTH = 1920;
 const DEFAULT_HEIGHT = 1080;
 const DEFAULT_FPS = 30;
+
+// Cancel render endpoint
+router.post('/render/cancel/:renderId', (req: Request, res: Response) => {
+  const { renderId } = req.params;
+  const cancelled = renderProgressTracker.cancelRender(renderId);
+
+  if (cancelled) {
+    res.json({ success: true, message: 'Render cancelled' });
+  } else {
+    res.status(404).json({ success: false, message: 'Render not found or already completed' });
+  }
+});
 
 // SSE endpoint for render progress
 router.get('/render/progress/:renderId', (req: Request, res: Response) => {
@@ -86,6 +98,24 @@ router.post('/render', async (req: Request, res: Response) => {
 
   const outputPath = path.join(os.tmpdir(), `${uuid()}.mp4`);
   let audioFilePath: string | null = null;
+
+  // Create cancel signal for this render (Remotion's cancel mechanism)
+  const { cancelSignal, cancel } = makeCancelSignal();
+  renderProgressTracker.setCancelFunction(renderId, cancel);
+
+  // Track if render is still in progress
+  let renderInProgress = true;
+
+  // Cancel render if client disconnects (check socket destroyed, not request close)
+  const checkClientDisconnect = () => {
+    if (renderInProgress && req.socket?.destroyed) {
+      console.log(`Client socket destroyed, cancelling render ${renderId}`);
+      renderProgressTracker.cancelRender(renderId);
+    }
+  };
+
+  // Check periodically if client disconnected
+  const disconnectCheckInterval = setInterval(checkClientDisconnect, 1000);
 
   try {
     // Initialize progress tracking
@@ -194,6 +224,7 @@ router.post('/render', async (req: Request, res: Response) => {
       codec: 'h264',
       outputLocation: outputPath,
       inputProps,
+      cancelSignal,
       onProgress: ({ progress }) => {
         // Scale progress from 5-95% (leaving room for setup and finalization)
         const scaledProgress = Math.round(5 + progress * 90);
@@ -235,6 +266,10 @@ router.post('/render', async (req: Request, res: Response) => {
     const stream = fs.createReadStream(outputPath);
 
     stream.on('end', () => {
+      // Mark render as no longer in progress
+      renderInProgress = false;
+      clearInterval(disconnectCheckInterval);
+
       // Mark as complete
       renderProgressTracker.updateProgress(renderId, {
         progress: 100,
@@ -260,6 +295,10 @@ router.post('/render', async (req: Request, res: Response) => {
     });
 
     stream.on('error', (err) => {
+      // Mark render as no longer in progress
+      renderInProgress = false;
+      clearInterval(disconnectCheckInterval);
+
       console.error('Stream error:', err);
       renderProgressTracker.updateProgress(renderId, {
         progress: 0,
@@ -273,23 +312,39 @@ router.post('/render', async (req: Request, res: Response) => {
 
     stream.pipe(res);
   } catch (error) {
-    console.error('Render error:', error);
+    // Mark render as no longer in progress
+    renderInProgress = false;
+    clearInterval(disconnectCheckInterval);
 
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    // Check if render was cancelled by user (Remotion's cancel message)
+    const isCancelled = error instanceof Error &&
+      error.message.includes('got cancelled');
 
-    // Update progress with error
-    renderProgressTracker.updateProgress(renderId, {
-      progress: 0,
-      status: 'error',
-      message: errorMessage,
-    });
+    if (isCancelled) {
+      console.log(`Render ${renderId} was cancelled`);
+      renderProgressTracker.updateProgress(renderId, {
+        progress: 0,
+        status: 'cancelled',
+        message: 'Render cancelled',
+      });
+    } else {
+      console.error('Render error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Update progress with error
+      renderProgressTracker.updateProgress(renderId, {
+        progress: 0,
+        status: 'error',
+        message: errorMessage,
+      });
+    }
 
     // Clean up progress tracker after a delay
     setTimeout(() => {
       renderProgressTracker.removeRender(renderId);
     }, 10000);
 
-    // Cleanup temp files on error
+    // Cleanup temp files on error/cancel
     if (fs.existsSync(outputPath)) {
       fs.unlinkSync(outputPath);
     }
@@ -298,15 +353,21 @@ router.post('/render', async (req: Request, res: Response) => {
     }
 
     if (!res.headersSent) {
-      // Provide more detailed error information
-      const errorStack = error instanceof Error ? error.stack : undefined;
-      console.error('Full error stack:', errorStack);
+      if (isCancelled) {
+        // Client cancelled, just close the connection
+        res.status(499).end(); // 499 = Client Closed Request
+      } else {
+        // Provide more detailed error information
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error('Full error stack:', errorStack);
 
-      res.status(500).json({
-        error: 'Video rendering failed',
-        details: errorMessage,
-        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
-      });
+        res.status(500).json({
+          error: 'Video rendering failed',
+          details: errorMessage,
+          stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
+        });
+      }
     }
   }
 });
