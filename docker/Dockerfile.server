@@ -1,0 +1,97 @@
+# Build stage
+FROM node:20-bookworm-slim AS builder
+
+WORKDIR /app
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy workspace files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY turbo.json tsconfig.base.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/server/package.json ./packages/server/
+COPY packages/web/package.json ./packages/web/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY packages/shared ./packages/shared
+COPY packages/server ./packages/server
+COPY packages/web ./packages/web
+
+# Build shared, web (for remotion bundle), and server
+RUN pnpm --filter @wrapp0r/shared build
+RUN pnpm --filter @wrapp0r/web bundle:remotion
+RUN pnpm --filter @wrapp0r/server build
+
+# Prune dev dependencies for production
+RUN pnpm --filter @wrapp0r/server --prod deploy /app/pruned
+
+# Production stage - using bookworm for Chromium compatibility
+FROM node:20-bookworm-slim
+
+# Add labels for container metadata
+LABEL org.opencontainers.image.title="Wrapp0r Server"
+LABEL org.opencontainers.image.description="API server for Wrapp0r - Transform any data into Spotify Wrapped-style videos"
+LABEL org.opencontainers.image.version="0.1.0"
+LABEL org.opencontainers.image.source="https://github.com/err0r-dev/wrapp0r"
+LABEL org.opencontainers.image.vendor="err0r.dev"
+
+WORKDIR /app
+
+# Install Chromium and dependencies for Puppeteer/Remotion video rendering
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    fonts-liberation \
+    fonts-noto-color-emoji \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libxshmfence1 \
+    wget \
+    xdg-utils \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Set Puppeteer to use installed Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Create non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
+
+# Copy pruned production build (includes node_modules)
+COPY --from=builder /app/pruned ./
+
+# Copy remotion bundle
+COPY --from=builder /app/packages/server/remotion-bundle ./remotion-bundle
+
+# Set ownership
+RUN chown -R appuser:appuser /app
+
+# Environment variables
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget -q --spider http://localhost:3001/api/health || exit 1
+
+EXPOSE 3001
+
+# Run as non-root user
+USER appuser
+
+CMD ["node", "dist/index.js"]
