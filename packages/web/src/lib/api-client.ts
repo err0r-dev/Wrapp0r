@@ -1,6 +1,9 @@
 import type { GenerateRequest, SSEEvent, WrappedExperience } from '@wrapp0r/shared';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Use empty string for Docker (nginx proxies /api), or localhost for local dev
+const API_BASE_URL = import.meta.env.VITE_API_URL !== undefined
+  ? import.meta.env.VITE_API_URL
+  : 'http://localhost:3001';
 
 // Timeout for API requests (2 minutes for generation which can be slow)
 const API_TIMEOUT_MS = 120000;

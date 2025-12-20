@@ -19,6 +19,9 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY packages/web ./packages/web
 
+# Set API URL to empty for Docker (nginx will proxy /api to server)
+ENV VITE_API_URL=""
+
 # Build
 RUN pnpm --filter @wrapp0r/shared build
 RUN pnpm --filter @wrapp0r/web build
@@ -39,8 +42,10 @@ RUN apk add --no-cache curl
 # Copy nginx config first (as root)
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy built files
+# Copy built files and fix permissions for nginx
 COPY --from=builder /app/packages/web/dist /usr/share/nginx/html
+RUN chmod -R 644 /usr/share/nginx/html/* && \
+    find /usr/share/nginx/html -type d -exec chmod 755 {} \;
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
