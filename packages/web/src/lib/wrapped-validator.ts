@@ -210,7 +210,7 @@ function validateListSlide(
 
   // Check if any item labels exist in the data
   const matchingItems = items.filter(item =>
-    stringValues.has(item.label.toLowerCase())
+    item.label && stringValues.has(item.label.toLowerCase())
   );
 
   if (items.length > 0 && matchingItems.length === 0) {
@@ -233,6 +233,19 @@ export function validateWrapped(
   originalData: Record<string, unknown>[]
 ): ValidationResult {
   const warnings: ValidationWarning[] = [];
+
+  // Handle empty or invalid data
+  if (!originalData || originalData.length === 0) {
+    return {
+      isValid: true,
+      warnings: [],
+      stats: {
+        totalSlides: wrapped.slides.length,
+        validatedSlides: 0,
+        suspiciousValues: 0,
+      },
+    };
+  }
 
   // Extract values from original data
   const numericValues = extractNumericValues(originalData);

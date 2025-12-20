@@ -77,6 +77,7 @@ export function AudioPlayer({
         onClick={onToggleMute}
         className={className}
         disabled={isLoading}
+        aria-label={isMuted ? 'Unmute audio' : 'Mute audio'}
       >
         <AnimatePresence mode="wait">
           {isMuted ? (
@@ -119,6 +120,7 @@ export function AudioPlayer({
             onClick={onTogglePlay}
             className="h-6 w-6 p-0 hover:bg-white/10"
             disabled={isLoading}
+            aria-label={isPlaying ? 'Pause music' : 'Play music'}
           >
             <AnimatePresence mode="wait">
               {isPlaying ? (
@@ -152,7 +154,7 @@ export function AudioPlayer({
             onClick={onSkip}
             className="h-6 w-6 p-0 hover:bg-white/10"
             disabled={isLoading}
-            title="Skip to different track"
+            aria-label="Skip to next track"
           >
             {isLoading ? (
               <motion.div
@@ -173,6 +175,7 @@ export function AudioPlayer({
           onClick={onToggleMute}
           className="h-6 w-6 p-0 hover:bg-white/10"
           disabled={isLoading}
+          aria-label={isMuted ? 'Unmute audio' : 'Mute audio'}
         >
           {isMuted ? (
             <VolumeX className="h-4 w-4" />
@@ -233,6 +236,7 @@ export function AudioPlayer({
         size="icon"
         onClick={onToggleMute}
         disabled={isLoading}
+        aria-label={isMuted ? 'Unmute audio' : 'Mute audio'}
       >
         {isMuted ? (
           <VolumeX className="h-5 w-5" />

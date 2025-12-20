@@ -1,11 +1,16 @@
 import { useState, useCallback } from 'react';
-import { Upload, FileSpreadsheet, FileText, FileJson, X, CheckCircle2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, FileJson, X, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 // Supported file extensions
 const SUPPORTED_EXTENSIONS = ['.xlsx', '.xls', '.csv', '.json'];
 const ACCEPTED_MIME_TYPES = '.xlsx,.xls,.csv,.json,text/csv,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+// File limits
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ROW_WARNING_THRESHOLD = 5000;
 
 function isValidFile(fileName: string): boolean {
   const lowerName = fileName.toLowerCase();
@@ -19,7 +24,7 @@ function getFileIcon(fileName: string) {
   return FileSpreadsheet;
 }
 
-interface ParsedFile {
+export interface ParsedFile {
   name: string;
   sheets: Array<{
     name: string;
@@ -38,10 +43,19 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   const parseFile = useCallback(async (file: File) => {
     setIsLoading(true);
     setError(null);
+    setWarning(null);
+
+    // Check file size
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError(`File is too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -59,6 +73,18 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
 
         // Flatten nested objects to get headers
         const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+
+        // Check for empty file
+        if (rows.length === 0) {
+          setError('The file appears to be empty. Please add some data rows.');
+          setIsLoading(false);
+          return;
+        }
+
+        // Check for large row count
+        if (rows.length > ROW_WARNING_THRESHOLD) {
+          setWarning(`This file has ${rows.length.toLocaleString()} rows. Large files may take longer to process.`);
+        }
 
         onFileSelect({
           name: file.name,
@@ -88,6 +114,18 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
 
         const totalRows = sheets.reduce((acc, sheet) => acc + sheet.rowCount, 0);
 
+        // Check for empty file
+        if (totalRows === 0) {
+          setError('The file appears to be empty. Please add some data rows.');
+          setIsLoading(false);
+          return;
+        }
+
+        // Check for large row count
+        if (totalRows > ROW_WARNING_THRESHOLD) {
+          setWarning(`This file has ${totalRows.toLocaleString()} rows. Large files may take longer to process.`);
+        }
+
         onFileSelect({
           name: file.name,
           sheets,
@@ -95,7 +133,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
         }, arrayBuffer);
       }
     } catch {
-      setError('Failed to parse file. Please ensure it\'s a valid Excel, CSV, or JSON file.');
+      setError('Unable to read file. Please ensure it\'s a valid Excel, CSV, or JSON file.');
     } finally {
       setIsLoading(false);
     }
@@ -129,6 +167,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
   const handleClear = () => {
     onFileSelect(null, null);
     setError(null);
+    setWarning(null);
   };
 
   if (selectedFile) {
@@ -173,6 +212,14 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
             </p>
           )}
         </div>
+
+        {/* Large file warning */}
+        {warning && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2 text-xs">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+            <span className="text-amber-700 dark:text-amber-400">{warning}</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -218,7 +265,7 @@ export function FileDropzone({ onFileSelect, selectedFile }: FileDropzoneProps) 
           <p className="text-sm font-medium">
             {isDragging ? 'Drop your file here' : 'Drop file or click to upload'}
           </p>
-          <p className="text-xs text-muted-foreground">.xlsx, .csv, or .json</p>
+          <p className="text-xs text-muted-foreground">.xlsx, .csv, or .json (max {MAX_FILE_SIZE_MB}MB)</p>
         </>
       )}
 

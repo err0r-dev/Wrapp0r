@@ -15,23 +15,33 @@ export function Header() {
 
   return (
     <>
+      {/* Skip link for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md"
+      >
+        Skip to main content
+      </a>
+
       <header className="sticky top-0 z-40 w-full border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 backdrop-blur-xl">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setShowSplash(true)}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              aria-label="Return to welcome screen"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
                 W
               </div>
               <span className="text-lg font-semibold">Wrapp0r</span>
             </button>
-            <nav className="hidden sm:flex items-center gap-1">
+            <nav className="flex items-center gap-1">
               <Link to="/guide">
                 <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
                   <HelpCircle className="h-4 w-4" />
-                  <span>What Can I Wrap?</span>
+                  <span className="hidden sm:inline">What Can I Wrap?</span>
+                  <span className="sm:hidden">Help</span>
                 </Button>
               </Link>
             </nav>

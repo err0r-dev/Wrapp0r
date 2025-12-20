@@ -2,6 +2,9 @@ import type { GenerateRequest, SSEEvent, WrappedExperience } from '@wrapp0r/shar
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// Timeout for API requests (2 minutes for generation which can be slow)
+const API_TIMEOUT_MS = 120000;
+
 export type GenerationStage = 'preparing' | 'analyzing' | 'generating' | 'designing' | 'finalizing' | 'complete';
 
 export interface GenerationProgress {
@@ -29,15 +32,34 @@ export async function generateWrapped(
   // Notify start
   onProgress?.({ stage: 'preparing', progress: 0, message: 'Preparing your data...' });
 
-  const response = await fetch(`${API_BASE_URL}/api/generate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(request),
-  });
+  // Set up timeout with AbortController
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, API_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    });
+  } catch (fetchError) {
+    clearTimeout(timeoutId);
+    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+      const timeoutMessage = 'Request timed out. Please try again with a smaller file.';
+      onError?.(timeoutMessage);
+      throw new Error(timeoutMessage);
+    }
+    throw fetchError;
+  }
 
   if (!response.ok) {
+    clearTimeout(timeoutId);
     const errorData = await response.json().catch(() => ({}));
     const errorMessage = errorData.error || `HTTP error ${response.status}`;
     onError?.(errorMessage);
@@ -47,6 +69,7 @@ export async function generateWrapped(
   // Handle SSE stream
   const reader = response.body?.getReader();
   if (!reader) {
+    clearTimeout(timeoutId);
     throw new Error('No response body');
   }
 
@@ -108,6 +131,7 @@ export async function generateWrapped(
       }
     }
   } finally {
+    clearTimeout(timeoutId);
     reader.releaseLock();
   }
 

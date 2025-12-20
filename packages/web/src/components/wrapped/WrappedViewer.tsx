@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Video, Palette } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Video, Palette, AlertTriangle } from 'lucide-react';
 import type { WrappedExperience, ColorTheme, DecorativeElement, MusicMood } from '@wrapp0r/shared';
 import { CATEGORY_THEMES, type CategoryTheme } from '@wrapp0r/shared';
 import { SlideRenderer } from './SlideRenderer';
@@ -9,11 +9,13 @@ import { useWrappedNavigation } from '@/hooks/useWrappedNavigation';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
 import { useSettings } from '@/hooks/useSettings';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { VideoExportModal } from '@/components/VideoExportModal';
 import { AUDIO_ENABLED } from '@/lib/audio-tracks';
+import type { ValidationWarning } from '@/lib/wrapped-validator';
 
 // Theme options for the selector
 const THEME_OPTIONS: Array<{ id: string; name: string; theme: CategoryTheme }> = [
@@ -43,6 +45,7 @@ interface WrappedViewerProps {
   autoAdvance?: boolean;
   enableAudio?: boolean;
   enableVideoExport?: boolean;
+  validationWarnings?: ValidationWarning[];
 }
 
 export function WrappedViewer({
@@ -51,13 +54,16 @@ export function WrappedViewer({
   autoAdvance = false,
   enableAudio = true,
   enableVideoExport = true,
+  validationWarnings = [],
 }: WrappedViewerProps) {
   // Get Pixabay API key from settings
   const { settings } = useSettings();
+  const prefersReducedMotion = useReducedMotion();
   // Only enable audio if files are available or we have a Pixabay key
   const audioEnabled = enableAudio && (AUDIO_ENABLED || !!settings.pixabayApiKey);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
+  const [showValidationWarning, setShowValidationWarning] = useState(validationWarnings.length > 0);
 
   // Always use light themes - match by primary color or default to food theme
   const getInitialTheme = (): { theme: ColorTheme; decoration: DecorativeElement } => {
@@ -323,6 +329,7 @@ export function WrappedViewer({
                   }}
                   style={{ color: currentTheme.text }}
                   className={`drop-shadow-sm ${currentTheme.text === '#FFFFFF' ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+                  aria-label="Close viewer"
                 >
                   <X className="h-5 w-5" />
                 </Button>
@@ -333,8 +340,8 @@ export function WrappedViewer({
           {/* Slide content with swipe feedback - z-10 to stay below controls at z-50 */}
           <motion.div
             className="z-10 h-full w-full touch-pan-y"
-            animate={{ x: swipeOffset }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            animate={{ x: prefersReducedMotion ? 0 : swipeOffset }}
+            transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
             {...swipeHandlers}
           >
             <AnimatePresence mode="wait">
@@ -391,6 +398,7 @@ export function WrappedViewer({
               className={`ml-2 h-12 w-12 opacity-50 transition-opacity hover:opacity-100 disabled:opacity-0 md:ml-4 drop-shadow-sm ${
                 currentTheme.text === '#FFFFFF' ? 'hover:bg-white/10' : 'hover:bg-black/10'
               }`}
+              aria-label="Previous slide"
             >
               <ChevronLeft className="h-8 w-8" />
             </Button>
@@ -409,13 +417,43 @@ export function WrappedViewer({
               className={`mr-2 h-12 w-12 opacity-50 transition-opacity hover:opacity-100 disabled:opacity-0 md:mr-4 drop-shadow-sm ${
                 currentTheme.text === '#FFFFFF' ? 'hover:bg-white/10' : 'hover:bg-black/10'
               }`}
+              aria-label="Next slide"
             >
               <ChevronRight className="h-8 w-8" />
             </Button>
           </div>
 
+          {/* Validation warning banner */}
+          <AnimatePresence>
+            {showValidationWarning && validationWarnings.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="absolute bottom-20 left-4 right-4 z-30 mx-auto max-w-md"
+              >
+                <div className="flex items-start gap-3 rounded-lg bg-amber-500/90 p-3 text-sm text-white shadow-lg backdrop-blur-sm">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium">Some values may not match your data</p>
+                    <p className="mt-0.5 text-xs text-white/80">
+                      {validationWarnings.length} potential {validationWarnings.length === 1 ? 'issue' : 'issues'} found. Please verify the generated content.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowValidationWarning(false)}
+                    className="rounded p-1 hover:bg-white/20"
+                    aria-label="Dismiss warning"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Dots navigation */}
-          <div className="absolute bottom-0 left-0 right-0 z-20 flex justify-center gap-2 pb-6">
+          <div className="absolute bottom-0 left-0 right-0 z-20 flex justify-center gap-1 pb-6">
             {wrapped.slides.map((_, index) => (
               <motion.button
                 key={index}
@@ -423,16 +461,22 @@ export function WrappedViewer({
                   e.stopPropagation();
                   goToSlide(index);
                 }}
-                className="h-2 rounded-full transition-all drop-shadow-sm"
-                style={{
-                  width: index === currentIndex ? '1.5rem' : '0.5rem',
-                  backgroundColor: index === currentIndex
-                    ? currentTheme.text
-                    : `${currentTheme.text}66`,
-                }}
-                whileHover={{ scale: 1.2 }}
+                className="flex h-11 w-11 items-center justify-center"
+                aria-label={`Go to slide ${index + 1} of ${totalSlides}`}
+                aria-current={index === currentIndex ? 'step' : undefined}
+                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-              />
+              >
+                <span
+                  className="block h-2 rounded-full transition-all drop-shadow-sm"
+                  style={{
+                    width: index === currentIndex ? '1.5rem' : '0.5rem',
+                    backgroundColor: index === currentIndex
+                      ? currentTheme.text
+                      : `${currentTheme.text}66`,
+                  }}
+                />
+              </motion.button>
             ))}
           </div>
 

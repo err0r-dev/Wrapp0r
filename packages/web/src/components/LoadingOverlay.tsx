@@ -24,27 +24,27 @@ const stageConfig: Record<
   preparing: {
     icon: Loader2,
     label: 'Preparing',
-    description: 'Getting your data ready...',
+    description: 'Reading and formatting your data...',
   },
   analyzing: {
     icon: BarChart3,
-    label: 'Analyzing',
-    description: 'Finding patterns in your data...',
+    label: 'Analysing',
+    description: 'Identifying key statistics and trends...',
   },
   generating: {
     icon: Wand2,
     label: 'Generating',
-    description: 'Creating insights and stories...',
+    description: 'Crafting your personalised story...',
   },
   designing: {
     icon: Palette,
     label: 'Designing',
-    description: 'Crafting beautiful visuals...',
+    description: 'Applying visual theme and layout...',
   },
   finalizing: {
     icon: Music,
-    label: 'Finalizing',
-    description: 'Adding the finishing touches...',
+    label: 'Finalising',
+    description: 'Adding finishing touches...',
   },
 };
 

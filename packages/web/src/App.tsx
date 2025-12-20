@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { SettingsProvider } from '@/hooks';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { SplashScreen } from '@/components/SplashScreen';
 import { LiquidGlassBackground } from '@/components/LiquidGlassBackground';
 import { Header } from '@/components/layout/Header';
@@ -37,7 +38,7 @@ function AppContent() {
       {/* Main content layer */}
       <div className="relative z-10">
         <Header />
-        <main className="container mx-auto px-4 py-8">
+        <main id="main-content" className="container mx-auto px-4 py-8">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/guide" element={<GuidePage />} />
@@ -55,15 +56,17 @@ function App() {
     <BrowserRouter>
       <ThemeProvider>
         <SettingsProvider>
-          <SplashContext.Provider value={{ showSplash, setShowSplash }}>
-            <AnimatePresence mode="wait">
-              {showSplash ? (
-                <SplashScreen key="splash" onContinue={() => setShowSplash(false)} />
-              ) : (
-                <AppContent key="main" />
-              )}
-            </AnimatePresence>
-          </SplashContext.Provider>
+          <ErrorBoundary>
+            <SplashContext.Provider value={{ showSplash, setShowSplash }}>
+              <AnimatePresence mode="wait">
+                {showSplash ? (
+                  <SplashScreen key="splash" onContinue={() => setShowSplash(false)} />
+                ) : (
+                  <AppContent key="main" />
+                )}
+              </AnimatePresence>
+            </SplashContext.Provider>
+          </ErrorBoundary>
         </SettingsProvider>
       </ThemeProvider>
     </BrowserRouter>

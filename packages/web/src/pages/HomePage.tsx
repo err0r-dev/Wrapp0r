@@ -1,26 +1,14 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, Sparkles, ArrowRight, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSettings, useWrappedGeneration } from '@/hooks';
-import { FileDropzone } from '@/components/upload/FileDropzone';
-import { CategorySelect } from '@/components/upload/CategorySelect';
 import { detectCategory } from '@/lib/category-detector';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { WrappedViewer } from '@/components/wrapped/WrappedViewer';
 import { ErrorMessage } from '@/components/ErrorMessage';
+import { WizardContainer } from '@/components/wizard';
+import { SettingsModal } from '@/components/SettingsModal';
 import type { DataCategory, WrappedExperience } from '@wrapp0r/shared';
-
-interface ParsedFile {
-  name: string;
-  sheets: Array<{
-    name: string;
-    headers: string[];
-    rowCount: number;
-  }>;
-  totalRows: number;
-}
+import type { ParsedFile } from '@/components/upload/FileDropzone';
 
 export function HomePage() {
   const { hasApiKey, settings } = useSettings();
@@ -29,11 +17,13 @@ export function HomePage() {
   const [category, setCategory] = useState<DataCategory | null>(null);
   const [customDescription, setCustomDescription] = useState('');
   const [wrappedResult, setWrappedResult] = useState<WrappedExperience | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const {
     isGenerating,
     progress,
     error,
+    validationWarnings,
     generate,
     reset,
     clearError,
@@ -41,8 +31,6 @@ export function HomePage() {
     apiKey: settings.apiKey || '',
     model: settings.model,
   });
-
-  const canGenerate = hasApiKey && file && fileData && category;
 
   // Extract all unique headers from the file for category detection
   const allHeaders = useMemo(() => {
@@ -66,14 +54,22 @@ export function HomePage() {
     }
   }, [allHeaders, category]);
 
-  const handleFileSelect = (parsedFile: ParsedFile | null, data: ArrayBuffer | null) => {
+  const handleFileSelect = useCallback((parsedFile: ParsedFile | null, data: ArrayBuffer | null) => {
     setFile(parsedFile);
     setFileData(data);
     // Reset category when file changes so auto-detection can run again
     setCategory(null);
-  };
+  }, []);
 
-  const handleGenerate = async () => {
+  const handleCategorySelect = useCallback((newCategory: DataCategory) => {
+    setCategory(newCategory);
+  }, []);
+
+  const handleCustomDescriptionChange = useCallback((description: string) => {
+    setCustomDescription(description);
+  }, []);
+
+  const handleGenerate = useCallback(async () => {
     if (!file || !fileData || !category) return;
 
     try {
@@ -87,192 +83,59 @@ export function HomePage() {
     } catch {
       // Error is handled by the hook and stored in state
     }
-  };
+  }, [file, fileData, category, customDescription, generate]);
 
-  const handleCloseViewer = () => {
+  const handleCloseViewer = useCallback(() => {
     setWrappedResult(null);
     reset();
-  };
+  }, [reset]);
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     clearError();
     handleGenerate();
-  };
+  }, [clearError, handleGenerate]);
+
+  const handleOpenSettings = useCallback(() => {
+    setSettingsOpen(true);
+  }, []);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
-      {/* Hero Section */}
+    <div className="mx-auto max-w-2xl">
+      {/* Hero Section - Simplified */}
       <motion.div
-        className="text-center"
+        className="mb-8 text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
           Transform Your Data Into
           <span className="block text-primary">Something Beautiful</span>
         </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600 dark:text-white/70">
-          Upload any Excel file and let AI create a personalized "Wrapped" experience,
-          just like Spotify Wrapped but for your data.
-        </p>
       </motion.div>
 
-      {/* API Key Warning */}
-      {!hasApiKey && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="border-amber-500/30 bg-amber-500/10 backdrop-blur-xl">
-            <CardContent className="flex items-center gap-4 p-4">
-              <Settings className="h-8 w-8 text-amber-500" />
-              <div className="flex-1">
-                <p className="font-medium text-gray-900 dark:text-white">OpenAI API Key Required</p>
-                <p className="text-sm text-gray-600 dark:text-white/60">
-                  Click the settings icon in the header to add your API key before generating.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
-
-      {/* Steps */}
+      {/* Wizard */}
       <motion.div
-        className="grid gap-6 md:grid-cols-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.2 }}
       >
-        {/* Step 1: Upload */}
-        <Card className={`bg-black/5 dark:bg-white/5 backdrop-blur-xl border-black/10 dark:border-white/10 ${file ? 'ring-2 ring-primary' : ''}`}>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                1
-              </div>
-              <CardTitle className="text-lg text-gray-900 dark:text-white">Upload Data</CardTitle>
-            </div>
-            <CardDescription className="text-gray-600 dark:text-white/60">
-              Upload your Excel or CSV file
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FileDropzone onFileSelect={handleFileSelect} selectedFile={file} />
-          </CardContent>
-        </Card>
-
-        {/* Step 2: Categorize */}
-        <Card className={`bg-black/5 dark:bg-white/5 backdrop-blur-xl border-black/10 dark:border-white/10 ${category ? 'ring-2 ring-primary' : ''}`}>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                2
-              </div>
-              <CardTitle className="text-lg text-gray-900 dark:text-white">Describe Data</CardTitle>
-            </div>
-            <CardDescription className="text-gray-600 dark:text-white/60">
-              What kind of data is this?
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CategorySelect
-              value={category}
-              onChange={setCategory}
-              customDescription={customDescription}
-              onCustomDescriptionChange={setCustomDescription}
-              disabled={!file}
-              headers={allHeaders}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Step 3: Generate */}
-        <Card className={`bg-black/5 dark:bg-white/5 backdrop-blur-xl border-black/10 dark:border-white/10 ${canGenerate ? 'ring-2 ring-primary' : ''}`}>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                3
-              </div>
-              <CardTitle className="text-lg text-gray-900 dark:text-white">Generate</CardTitle>
-            </div>
-            <CardDescription className="text-gray-600 dark:text-white/60">
-              Create your personalized Wrapped
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <Button
-              size="lg"
-              disabled={!canGenerate}
-              onClick={handleGenerate}
-              className="gap-2"
-            >
-              <Sparkles className="h-5 w-5" />
-              Generate Wrapped
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-            {!canGenerate && (
-              <p className="mt-4 text-center text-sm text-gray-500 dark:text-white/50">
-                {!hasApiKey
-                  ? 'Add your API key in settings'
-                  : !file
-                  ? 'Upload a file first'
-                  : 'Select a category'}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <WizardContainer
+          selectedFile={file}
+          onFileSelect={handleFileSelect}
+          selectedCategory={category}
+          onCategorySelect={handleCategorySelect}
+          customDescription={customDescription}
+          onCustomDescriptionChange={handleCustomDescriptionChange}
+          hasApiKey={hasApiKey}
+          onOpenSettings={handleOpenSettings}
+          isGenerating={isGenerating}
+          onGenerate={handleGenerate}
+        />
       </motion.div>
 
-      {/* Features */}
-      <motion.div
-        className="mt-12 grid gap-6 md:grid-cols-3"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <div className="text-center rounded-2xl bg-black/5 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 p-6">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-            <Upload className="h-6 w-6 text-primary" />
-          </div>
-          <h3 className="font-semibold text-gray-900 dark:text-white">Any Data</h3>
-          <p className="text-sm text-gray-600 dark:text-white/60">
-            Fitness, music, food, finance - any Excel data works
-          </p>
-        </div>
-        <div className="text-center rounded-2xl bg-black/5 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 p-6">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-            <Sparkles className="h-6 w-6 text-primary" />
-          </div>
-          <h3 className="font-semibold text-gray-900 dark:text-white">AI-Powered</h3>
-          <p className="text-sm text-gray-600 dark:text-white/60">
-            GPT-4o analyses your data and creates unique insights
-          </p>
-        </div>
-        <div className="text-center rounded-2xl bg-black/5 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 p-6">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-            <svg
-              className="h-6 w-6 text-primary"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <h3 className="font-semibold text-gray-900 dark:text-white">Export Video</h3>
-          <p className="text-sm text-gray-600 dark:text-white/60">
-            Download your Wrapped as a shareable video
-          </p>
-        </div>
-      </motion.div>
+      {/* Settings Modal */}
+      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       {/* Error message */}
       {error && (
@@ -299,6 +162,7 @@ export function HomePage() {
           onClose={handleCloseViewer}
           enableAudio={true}
           enableVideoExport={true}
+          validationWarnings={validationWarnings}
         />
       )}
     </div>

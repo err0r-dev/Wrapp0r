@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useVideoExport, formatTimeRemaining } from '@/hooks/useVideoExport';
 import { useSettings } from '@/hooks/useSettings';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { exportPresets, defaultPreset, type ExportPreset } from '@/lib/export-presets';
 import { cn } from '@/lib/utils';
 
@@ -28,8 +29,13 @@ interface VideoExportModalProps {
   currentTheme?: ColorTheme;
 }
 
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl, currentTheme }: VideoExportModalProps) {
   const [selectedPreset, setSelectedPreset] = useState<ExportPreset>(defaultPreset);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   const { status, progress, progressMessage, estimatedTimeRemaining, error, exportVideo, reset } = useVideoExport();
   const { settings } = useSettings();
@@ -62,6 +68,45 @@ export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl, cu
       setSelectedPreset(defaultPreset);
     }
   }, [isOpen]);
+
+  // Focus trap
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    // Focus first focusable element
+    const focusableElements = modal.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+    if (focusableElements.length > 0) {
+      focusableElements[0].focus();
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      const focusable = modal.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, status]);
 
   if (!isOpen) return null;
 
@@ -109,16 +154,20 @@ export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl, cu
     <AnimatePresence>
       <motion.div
         className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-        initial={{ opacity: 0 }}
+        initial={prefersReducedMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        exit={prefersReducedMotion ? undefined : { opacity: 0 }}
         onClick={handleClose}
       >
         <motion.div
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="export-modal-title"
           className="relative w-full max-w-md overflow-hidden rounded-xl bg-zinc-900 shadow-2xl"
-          initial={{ scale: 0.9, opacity: 0 }}
+          initial={prefersReducedMotion ? false : { scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
+          exit={prefersReducedMotion ? undefined : { scale: 0.9, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -126,7 +175,7 @@ export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl, cu
             <div className="flex items-center gap-3">
               {statusDisplay.icon}
               <div>
-                <h2 className="text-lg font-semibold text-white">{statusDisplay.title}</h2>
+                <h2 id="export-modal-title" className="text-lg font-semibold text-white">{statusDisplay.title}</h2>
                 <p className="text-sm text-white/60">{statusDisplay.subtitle}</p>
               </div>
             </div>
@@ -136,6 +185,7 @@ export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl, cu
               onClick={handleClose}
               className="text-white/60 hover:text-white"
               disabled={isExporting}
+              aria-label="Close export dialog"
             >
               <X className="h-5 w-5" />
             </Button>

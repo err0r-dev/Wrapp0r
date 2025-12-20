@@ -74,6 +74,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               type="button"
               onClick={() => setOpenAIExpanded(!openAIExpanded)}
               className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+              aria-expanded={openAIExpanded}
+              aria-controls="openai-settings"
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
@@ -88,7 +90,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             </button>
 
             {openAIExpanded && (
-              <div className="border-t border-border p-4 space-y-4">
+              <div id="openai-settings" className="border-t border-border p-4 space-y-4">
                 {/* OpenAI API Key */}
                 <div className="space-y-2">
                   <Label htmlFor="apiKey">API Key</Label>
@@ -99,7 +101,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         type={showApiKey ? 'text' : 'password'}
                         value={localApiKey}
                         onChange={(e) => setLocalApiKey(e.target.value)}
-                        placeholder="sk-..."
+                        placeholder="sk-proj-xxxx..."
                         className="pr-10"
                       />
                       <button
@@ -178,7 +180,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <Brain className="h-3.5 w-3.5" />
                       <span>Reasoning Models</span>
                       <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                        Slower
+                        Longer processing
                       </span>
                     </div>
                     <div className="grid gap-2">
@@ -249,6 +251,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               type="button"
               onClick={() => setMusicExpanded(!musicExpanded)}
               className="flex w-full items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+              aria-expanded={musicExpanded}
+              aria-controls="music-settings"
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/10">
@@ -263,7 +267,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             </button>
 
             {musicExpanded && (
-              <div className="border-t border-border p-4 space-y-2">
+              <div id="music-settings" className="border-t border-border p-4 space-y-2">
                 <Label htmlFor="pixabayKey">Client ID</Label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">

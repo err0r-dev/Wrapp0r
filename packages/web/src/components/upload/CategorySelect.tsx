@@ -79,7 +79,11 @@ export function CategorySelect({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div
+        className="grid grid-cols-2 gap-2"
+        role="radiogroup"
+        aria-label="Select data category"
+      >
         {DATA_CATEGORIES.map((category) => {
           const Icon = ICON_MAP[category.icon as keyof typeof ICON_MAP];
           const isSelected = value === category.id;
@@ -90,6 +94,8 @@ export function CategorySelect({
             <button
               key={category.id}
               type="button"
+              role="radio"
+              aria-checked={isSelected}
               disabled={disabled}
               onClick={() => onChange(category.id)}
               className={cn(
@@ -129,7 +135,7 @@ export function CategorySelect({
             {DATA_CATEGORIES.find((c) => c.id === value)?.examples}
           </p>
           <Input
-            placeholder="Optional: Add more context about your data..."
+            placeholder="Optional: Describe your data (e.g., 'My 2024 running data from Strava')"
             value={customDescription}
             onChange={(e) => onCustomDescriptionChange(e.target.value)}
             className="text-sm"
