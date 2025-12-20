@@ -1,5 +1,6 @@
 import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig, interpolate, Audio } from 'remotion';
-import type { WrappedExperience, Slide, ColorTheme } from '@wrapp0r/shared';
+import type { WrappedExperience, Slide, ColorTheme, DecorativeElement } from '@wrapp0r/shared';
+import { CATEGORY_THEMES } from '@wrapp0r/shared';
 import {
   TitleSlide,
   StatSlide,
@@ -9,6 +10,15 @@ import {
   QuoteSlide,
   SummarySlide,
 } from './slides';
+import {
+  ParticleDecoration,
+  WaveDecoration,
+  ShapeDecoration,
+  GridDecoration,
+  RingDecoration,
+  SpotlightDecoration,
+  GlowDecoration,
+} from './decorations';
 
 export interface WrappedCompositionProps {
   wrapped: WrappedExperience;
@@ -16,46 +26,96 @@ export interface WrappedCompositionProps {
   audioSrc?: string;
 }
 
-// Get background style from slide and theme
-function getBackgroundStyle(background: Slide['background'], theme: ColorTheme): React.CSSProperties {
-  switch (background.type) {
-    case 'gradient':
-      return { background: background.value };
-    case 'pattern':
-      // For patterns, use a subtle gradient as fallback
-      return {
-        background: `linear-gradient(135deg, ${theme.primary}dd, ${theme.secondary}dd)`,
-      };
-    case 'solid':
-    default:
-      return { backgroundColor: background.value || theme.background };
-  }
+// Derive decorative element from theme (same logic as WrappedViewer)
+function getDecorativeElement(theme: ColorTheme): DecorativeElement | undefined {
+  const matched = Object.entries(CATEGORY_THEMES).find(
+    ([, t]) => t.primary === theme.primary
+  );
+  return matched ? matched[1].decorativeElement : undefined;
+}
+
+/**
+ * Adjusts a hex color's opacity by appending alpha value
+ */
+function withOpacity(hex: string, opacity: number): string {
+  const alpha = Math.round(opacity * 255).toString(16).padStart(2, '0');
+  return `${hex}${alpha}`;
+}
+
+/**
+ * Creates a subtle theme-based gradient
+ * Always uses theme colors, ignoring AI-generated background values
+ * (matches web SlideRenderer behavior)
+ */
+function getBackgroundStyle(_background: Slide['background'], theme: ColorTheme): React.CSSProperties {
+  // Create a subtle gradient using theme colors with low opacity
+  // This ensures themes look consistent between viewer and export
+  const themeGradient = `linear-gradient(
+    135deg,
+    ${theme.background} 0%,
+    ${withOpacity(theme.primary, 0.15)} 35%,
+    ${withOpacity(theme.secondary, 0.2)} 65%,
+    ${withOpacity(theme.accent, 0.1)} 100%
+  )`;
+
+  return { background: themeGradient };
 }
 
 // Map slide types to components
 function SlideRenderer({ slide, theme }: { slide: Slide; theme: ColorTheme }) {
   switch (slide.type) {
     case 'title':
-      return <TitleSlide slide={slide} />;
+      return <TitleSlide slide={slide} theme={theme} />;
     case 'stat':
-      return <StatSlide slide={slide} />;
+      return <StatSlide slide={slide} theme={theme} />;
     case 'chart':
-      return <ChartSlide slide={slide} />;
+      return <ChartSlide slide={slide} theme={theme} />;
     case 'list':
-      return <ListSlide slide={slide} />;
+      return <ListSlide slide={slide} theme={theme} />;
     case 'comparison':
-      return <ComparisonSlide slide={slide} />;
+      return <ComparisonSlide slide={slide} theme={theme} />;
     case 'quote':
-      return <QuoteSlide slide={slide} />;
+      return <QuoteSlide slide={slide} theme={theme} />;
     case 'summary':
-      return <SummarySlide slide={slide} />;
+      return <SummarySlide slide={slide} theme={theme} />;
     default:
       return null;
   }
 }
 
-// Animated background decoration - matches web SlideRenderer decorations
-function BackgroundDecoration({ theme }: { theme: ColorTheme }) {
+// Render decoration based on type
+function renderDecoration(
+  element: DecorativeElement | undefined,
+  theme: ColorTheme
+): React.ReactNode {
+  const props = {
+    primaryColor: theme.primary,
+    secondaryColor: theme.secondary,
+    accentColor: theme.accent,
+  };
+
+  switch (element) {
+    case 'particles':
+      return <ParticleDecoration {...props} />;
+    case 'waves':
+      return <WaveDecoration {...props} />;
+    case 'shapes':
+      return <ShapeDecoration {...props} />;
+    case 'grid':
+      return <GridDecoration {...props} />;
+    case 'rings':
+      return <RingDecoration {...props} />;
+    case 'spotlight':
+      return <SpotlightDecoration {...props} />;
+    case 'glow':
+      return <GlowDecoration {...props} />;
+    default:
+      return <FallbackDecoration theme={theme} />;
+  }
+}
+
+// Fallback animated background decoration (generic blobs)
+function FallbackDecoration({ theme }: { theme: ColorTheme }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -127,6 +187,9 @@ function SlideTransition({ durationInFrames }: { durationInFrames: number }) {
 export function WrappedComposition({ wrapped, includeAudio = true, audioSrc }: WrappedCompositionProps) {
   const { fps } = useVideoConfig();
 
+  // Derive decorative element from theme (matches web viewer behavior)
+  const decorativeElement = getDecorativeElement(wrapped.theme);
+
   // Calculate frame positions for each slide
   const slideFrames = wrapped.slides.map((slide) => {
     // Convert duration from ms to frames
@@ -151,9 +214,6 @@ export function WrappedComposition({ wrapped, includeAudio = true, audioSrc }: W
       {/* Background base color */}
       <AbsoluteFill style={{ backgroundColor: wrapped.theme.background }} />
 
-      {/* Animated background decoration */}
-      <BackgroundDecoration theme={wrapped.theme} />
-
       {/* Render each slide as a sequence */}
       {wrapped.slides.map((slide, index) => (
         <Sequence
@@ -163,6 +223,11 @@ export function WrappedComposition({ wrapped, includeAudio = true, audioSrc }: W
         >
           {/* Slide background */}
           <AbsoluteFill style={getBackgroundStyle(slide.background, wrapped.theme)} />
+
+          {/* Animated background decoration - category-specific (rendered per slide, after background) */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            {renderDecoration(decorativeElement, wrapped.theme)}
+          </div>
 
           {/* Slide content */}
           <SlideRenderer slide={slide} theme={wrapped.theme} />

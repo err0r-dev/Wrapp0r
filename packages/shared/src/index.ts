@@ -55,3 +55,24 @@ export type {
   SSEEvent,
   StoredSettings,
 } from './types/api.js';
+
+// Theme exports
+export {
+  CATEGORY_THEMES,
+  getCategoryTheme,
+  hasPredefinedTheme,
+} from './themes/category-themes.js';
+
+export type {
+  CategoryTheme,
+  DecorativeElement,
+  AnimationSpeed,
+  AnimationStyle,
+} from './themes/category-themes.js';
+
+// Color utility exports
+export {
+  getContrastRatio,
+  isAccessible,
+  getMinimumContrastRatio,
+} from './utils/color-utils.js';

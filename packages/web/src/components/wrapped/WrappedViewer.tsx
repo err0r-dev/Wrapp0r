@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Video } from 'lucide-react';
-import type { WrappedExperience } from '@wrapp0r/shared';
+import { ChevronLeft, ChevronRight, X, Video, Palette } from 'lucide-react';
+import type { WrappedExperience, ColorTheme, DecorativeElement, MusicMood } from '@wrapp0r/shared';
+import { CATEGORY_THEMES, type CategoryTheme } from '@wrapp0r/shared';
 import { SlideRenderer } from './SlideRenderer';
 import { useWrappedNavigation } from '@/hooks/useWrappedNavigation';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
@@ -13,6 +14,28 @@ import { Progress } from '@/components/ui/progress';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { VideoExportModal } from '@/components/VideoExportModal';
 import { AUDIO_ENABLED } from '@/lib/audio-tracks';
+
+// Theme options for the selector
+const THEME_OPTIONS: Array<{ id: string; name: string; theme: CategoryTheme }> = [
+  { id: 'fitness', name: 'Fitness', theme: CATEGORY_THEMES.fitness },
+  { id: 'music', name: 'Music', theme: CATEGORY_THEMES.music },
+  { id: 'food', name: 'Food', theme: CATEGORY_THEMES.food },
+  { id: 'finance', name: 'Finance', theme: CATEGORY_THEMES.finance },
+  { id: 'productivity', name: 'Work', theme: CATEGORY_THEMES.productivity },
+  { id: 'entertainment', name: 'Media', theme: CATEGORY_THEMES.entertainment },
+  { id: 'gaming', name: 'Gaming', theme: CATEGORY_THEMES.gaming },
+];
+
+// Map theme IDs to music moods
+const THEME_TO_MOOD: Record<string, MusicMood> = {
+  fitness: 'energetic',
+  music: 'upbeat',
+  food: 'warm',
+  finance: 'professional',
+  productivity: 'chill',
+  entertainment: 'dramatic',
+  gaming: 'energetic',
+};
 
 interface WrappedViewerProps {
   wrapped: WrappedExperience;
@@ -34,6 +57,46 @@ export function WrappedViewer({
   // Only enable audio if files are available or we have a Pixabay key
   const audioEnabled = enableAudio && (AUDIO_ENABLED || !!settings.pixabayApiKey);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
+
+  // Always use light themes - match by primary color or default to food theme
+  const getInitialTheme = (): { theme: ColorTheme; decoration: DecorativeElement } => {
+    // Try to match wrapped theme to a category theme by primary color
+    const matchedEntry = Object.entries(CATEGORY_THEMES).find(
+      ([, t]) => t.primary === wrapped.theme.primary
+    );
+
+    if (matchedEntry) {
+      const [, categoryTheme] = matchedEntry;
+      return {
+        theme: {
+          primary: categoryTheme.primary,
+          secondary: categoryTheme.secondary,
+          accent: categoryTheme.accent,
+          background: categoryTheme.background,
+          text: categoryTheme.text,
+        },
+        decoration: categoryTheme.decorativeElement,
+      };
+    }
+
+    // Default to food theme if no match (warm, welcoming)
+    const defaultTheme = CATEGORY_THEMES.food;
+    return {
+      theme: {
+        primary: defaultTheme.primary,
+        secondary: defaultTheme.secondary,
+        accent: defaultTheme.accent,
+        background: defaultTheme.background,
+        text: defaultTheme.text,
+      },
+      decoration: defaultTheme.decorativeElement,
+    };
+  };
+
+  const initial = getInitialTheme();
+  const [currentTheme, setCurrentTheme] = useState<ColorTheme>(initial.theme);
+  const [currentDecoration, setCurrentDecoration] = useState<DecorativeElement>(initial.decoration);
   const {
     currentIndex,
     currentSlide,
@@ -96,13 +159,18 @@ export function WrappedViewer({
       >
         {/* Content container - 90% of screen */}
         <div
-          className="relative h-[90vh] w-[90vw] max-w-7xl overflow-hidden rounded-2xl bg-black shadow-2xl"
+          className="relative h-[90vh] w-[90vw] max-w-7xl overflow-hidden rounded-2xl shadow-2xl"
+          style={{ backgroundColor: currentTheme.background }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Progress bar at top */}
           <div className="absolute left-0 right-0 top-0 z-20 px-4 pt-4">
             <div className="mx-auto max-w-3xl">
-              <Progress value={progress} className="h-1 bg-white/20" />
+              <Progress
+                value={progress}
+                className="h-1"
+                style={{ backgroundColor: `${currentTheme.text}33` }}
+              />
             </div>
           </div>
 
@@ -127,24 +195,123 @@ export function WrappedViewer({
               )}
             </div>
 
-            <div className="text-sm text-white/70">
+            <div
+              className="text-sm drop-shadow-sm"
+              style={{ color: `${currentTheme.text}B3` }}
+            >
               {currentIndex + 1} / {totalSlides}
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Theme Selector */}
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsThemeSelectorOpen(!isThemeSelectorOpen);
+                  }}
+                  className="flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 text-sm backdrop-blur-sm transition-colors hover:bg-black/30"
+                  style={{ color: currentTheme.text }}
+                >
+                  <Palette className="h-4 w-4" />
+                  <span>Theme</span>
+                </button>
+
+                {/* Theme dropdown */}
+                <AnimatePresence>
+                  {isThemeSelectorOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className={`absolute right-0 top-full mt-2 z-50 min-w-[160px] rounded-lg backdrop-blur-xl border p-2 shadow-xl ${
+                        currentTheme.text === '#FFFFFF'
+                          ? 'bg-black/90 border-white/20'
+                          : 'bg-white/90 border-black/20'
+                      }`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {THEME_OPTIONS.map((option) => (
+                        <button
+                          key={option.id}
+                          onClick={() => {
+                            setCurrentTheme({
+                              primary: option.theme.primary,
+                              secondary: option.theme.secondary,
+                              accent: option.theme.accent,
+                              background: option.theme.background,
+                              text: option.theme.text,
+                            });
+                            setCurrentDecoration(option.theme.decorativeElement);
+                            // Change music to match the new theme
+                            const mood = THEME_TO_MOOD[option.id];
+                            if (mood && audioEnabled) {
+                              audio.changeMood(mood);
+                            }
+                            setIsThemeSelectorOpen(false);
+                          }}
+                          className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                            currentTheme.text === '#FFFFFF'
+                              ? 'text-white hover:bg-white/10'
+                              : 'text-gray-900 hover:bg-black/10'
+                          }`}
+                        >
+                          <div
+                            className={`h-4 w-4 rounded-full border ${
+                              currentTheme.text === '#FFFFFF' ? 'border-white/30' : 'border-black/30'
+                            }`}
+                            style={{ backgroundColor: option.theme.primary }}
+                          />
+                          {option.name}
+                        </button>
+                      ))}
+                      {/* Reset to original */}
+                      <div className={`border-t mt-2 pt-2 ${
+                        currentTheme.text === '#FFFFFF' ? 'border-white/10' : 'border-black/10'
+                      }`}>
+                        <button
+                          onClick={() => {
+                            const resetTheme = getInitialTheme();
+                            setCurrentTheme(resetTheme.theme);
+                            setCurrentDecoration(resetTheme.decoration);
+                            // Reset music to original mood
+                            if (audioEnabled && wrapped.musicMood) {
+                              audio.changeMood(wrapped.musicMood);
+                            }
+                            setIsThemeSelectorOpen(false);
+                          }}
+                          className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                            currentTheme.text === '#FFFFFF'
+                              ? 'text-white/70 hover:bg-white/10 hover:text-white'
+                              : 'text-gray-600 hover:bg-black/10 hover:text-gray-900'
+                          }`}
+                        >
+                          <div
+                            className={`h-4 w-4 rounded-full border ${
+                              currentTheme.text === '#FFFFFF' ? 'border-white/30' : 'border-black/30'
+                            }`}
+                            style={{ backgroundColor: initial.theme.primary }}
+                          />
+                          Original
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               {enableVideoExport && (
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsExportModalOpen(true);
                   }}
-                  className="text-white hover:bg-white/10"
+                  className="flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 text-sm backdrop-blur-sm transition-colors hover:bg-black/30"
+                  style={{ color: currentTheme.text }}
                 >
-                  <Video className="mr-2 h-4 w-4" />
-                  Video
-                </Button>
+                  <Video className="h-4 w-4" />
+                  <span>Export video</span>
+                </button>
               )}
               {onClose && (
                 <Button
@@ -154,7 +321,8 @@ export function WrappedViewer({
                     e.stopPropagation();
                     handleClose();
                   }}
-                  className="text-white hover:bg-white/10"
+                  style={{ color: currentTheme.text }}
+                  className={`drop-shadow-sm ${currentTheme.text === '#FFFFFF' ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
                 >
                   <X className="h-5 w-5" />
                 </Button>
@@ -173,7 +341,8 @@ export function WrappedViewer({
               <SlideRenderer
                 key={currentSlide.id}
                 slide={currentSlide}
-                theme={wrapped.theme}
+                theme={currentTheme}
+                decorativeElement={currentDecoration}
               />
             </AnimatePresence>
           </motion.div>
@@ -184,22 +353,24 @@ export function WrappedViewer({
               <>
                 {swipeState.direction === 'right' && !isFirst && (
                   <motion.div
-                    className="absolute left-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/20 p-3"
+                    className="absolute left-4 top-1/2 z-30 -translate-y-1/2 rounded-full p-3"
+                    style={{ backgroundColor: `${currentTheme.text}33` }}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: Math.min(Math.abs(swipeState.deltaX) / 100, 1), scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                   >
-                    <ChevronLeft className="h-6 w-6 text-white" />
+                    <ChevronLeft className="h-6 w-6" style={{ color: currentTheme.text }} />
                   </motion.div>
                 )}
                 {swipeState.direction === 'left' && !isLast && (
                   <motion.div
-                    className="absolute right-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/20 p-3"
+                    className="absolute right-4 top-1/2 z-30 -translate-y-1/2 rounded-full p-3"
+                    style={{ backgroundColor: `${currentTheme.text}33` }}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: Math.min(Math.abs(swipeState.deltaX) / 100, 1), scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                   >
-                    <ChevronRight className="h-6 w-6 text-white" />
+                    <ChevronRight className="h-6 w-6" style={{ color: currentTheme.text }} />
                   </motion.div>
                 )}
               </>
@@ -216,7 +387,10 @@ export function WrappedViewer({
                 goPrev();
               }}
               disabled={isFirst}
-              className="ml-2 h-12 w-12 text-white opacity-50 transition-opacity hover:bg-white/10 hover:opacity-100 disabled:opacity-0 md:ml-4"
+              style={{ color: currentTheme.text }}
+              className={`ml-2 h-12 w-12 opacity-50 transition-opacity hover:opacity-100 disabled:opacity-0 md:ml-4 drop-shadow-sm ${
+                currentTheme.text === '#FFFFFF' ? 'hover:bg-white/10' : 'hover:bg-black/10'
+              }`}
             >
               <ChevronLeft className="h-8 w-8" />
             </Button>
@@ -231,7 +405,10 @@ export function WrappedViewer({
                 goNext();
               }}
               disabled={isLast}
-              className="mr-2 h-12 w-12 text-white opacity-50 transition-opacity hover:bg-white/10 hover:opacity-100 disabled:opacity-0 md:mr-4"
+              style={{ color: currentTheme.text }}
+              className={`mr-2 h-12 w-12 opacity-50 transition-opacity hover:opacity-100 disabled:opacity-0 md:mr-4 drop-shadow-sm ${
+                currentTheme.text === '#FFFFFF' ? 'hover:bg-white/10' : 'hover:bg-black/10'
+              }`}
             >
               <ChevronRight className="h-8 w-8" />
             </Button>
@@ -246,11 +423,13 @@ export function WrappedViewer({
                   e.stopPropagation();
                   goToSlide(index);
                 }}
-                className={`h-2 rounded-full transition-all ${
-                  index === currentIndex
-                    ? 'w-6 bg-white'
-                    : 'w-2 bg-white/40 hover:bg-white/60'
-                }`}
+                className="h-2 rounded-full transition-all drop-shadow-sm"
+                style={{
+                  width: index === currentIndex ? '1.5rem' : '0.5rem',
+                  backgroundColor: index === currentIndex
+                    ? currentTheme.text
+                    : `${currentTheme.text}66`,
+                }}
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}
               />
@@ -267,7 +446,11 @@ export function WrappedViewer({
               transition={{ delay: 2 }}
             >
               <motion.div
-                className="rounded-full bg-white/10 px-4 py-2 text-xs text-white/70 backdrop-blur-sm"
+                className="rounded-full px-4 py-2 text-xs backdrop-blur-sm"
+                style={{
+                  backgroundColor: `${currentTheme.text}1A`,
+                  color: `${currentTheme.text}B3`,
+                }}
                 animate={{ x: [-5, 5, -5] }}
                 transition={{ duration: 2, repeat: 3, ease: 'easeInOut' }}
               >
@@ -285,6 +468,7 @@ export function WrappedViewer({
           isOpen={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
           currentAudioUrl={audio.currentTrack?.originalUrl}
+          currentTheme={currentTheme}
         />
       )}
     </>,

@@ -1,12 +1,13 @@
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
-import type { TitleSlide as TitleSlideType } from '@wrapp0r/shared';
+import type { TitleSlide as TitleSlideType, ColorTheme } from '@wrapp0r/shared';
 import { useAnimationStyle } from '../animations';
 
 interface TitleSlideProps {
   slide: TitleSlideType;
+  theme?: ColorTheme;
 }
 
-export function TitleSlide({ slide }: TitleSlideProps) {
+export function TitleSlide({ slide, theme }: TitleSlideProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { headline, subtitle, year, emoji } = slide.content;

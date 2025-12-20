@@ -1,4 +1,4 @@
-import type { DataCategory } from '@wrapp0r/shared';
+import { hasPredefinedTheme, type DataCategory } from '@wrapp0r/shared';
 
 const CATEGORY_CONTEXTS: Record<DataCategory, string> = {
   fitness: 'This is FITNESS/EXERCISE tracking data. Calories here are BURNED through physical activity. Focus on workout achievements, personal records, consistency, and progress. Use energetic, motivating language.',
@@ -75,10 +75,10 @@ ${category === 'fitness' ? `### FITNESS DATA RULES:
 2. Create a sequence of 8-12 slides that tell a compelling data story
 3. Use creative, engaging headlines (make them punchy and memorable!)
 4. Choose appropriate visualisations for each insight
-5. Design a cohesive colour theme inspired by Spotify Wrapped campaigns
-
+${hasPredefinedTheme(category) ? '5. The colour theme will be provided - focus on content, not colours' : '5. Design a cohesive colour theme inspired by Spotify Wrapped campaigns'}
+${!hasPredefinedTheme(category) ? `
 ## Colour Design Guidelines
-Use colours inspired by Spotify Wrapped campaigns. Choose from these palette styles:
+Generate an appropriate colour theme based on the data. Use these palette styles as inspiration:
 
 1. **Classic Spotify**: Dark backgrounds (#121212, #191414) with bright green (#1DB954) accents
 2. **Wrapped Gradient**: Vibrant gradients mixing pink (#FF6B9D), orange (#FF8C42), and purple (#A855F7)
@@ -90,7 +90,7 @@ IMPORTANT:
 - Prefer dark backgrounds (#121212, #1A1A2E, #191414) with bright, contrasting accent colours
 - Text colour should ALWAYS be white (#FFFFFF) or near-white for readability
 - Use vibrant gradients for slide backgrounds (e.g., "linear-gradient(135deg, #FF6B9D, #A855F7)")
-- Ensure sufficient contrast for accessibility
+- Ensure sufficient contrast for accessibility (4.5:1 for normal text)` : ''}
 
 ## Slide Requirements
 - Start with an exciting title slide introducing the wrapped

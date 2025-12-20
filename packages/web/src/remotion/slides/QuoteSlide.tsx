@@ -1,13 +1,14 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig, spring } from 'remotion';
 import { Quote } from 'lucide-react';
-import type { QuoteSlide as QuoteSlideType } from '@wrapp0r/shared';
+import type { QuoteSlide as QuoteSlideType, ColorTheme } from '@wrapp0r/shared';
 import { useEasedProgress } from '../animations';
 
 interface QuoteSlideProps {
   slide: QuoteSlideType;
+  theme?: ColorTheme;
 }
 
-export function QuoteSlide({ slide }: QuoteSlideProps) {
+export function QuoteSlide({ slide, theme }: QuoteSlideProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { quote, attribution } = slide.content;

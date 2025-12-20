@@ -1,12 +1,13 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
-import type { SummarySlide as SummarySlideType } from '@wrapp0r/shared';
+import type { SummarySlide as SummarySlideType, ColorTheme } from '@wrapp0r/shared';
 import { getIconByName } from '../../lib/icons';
 
 interface SummarySlideProps {
   slide: SummarySlideType;
+  theme?: ColorTheme;
 }
 
-export function SummarySlide({ slide }: SummarySlideProps) {
+export function SummarySlide({ slide, theme }: SummarySlideProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { title, highlights, closingMessage } = slide.content;

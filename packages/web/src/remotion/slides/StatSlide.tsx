@@ -1,13 +1,14 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
-import type { StatSlide as StatSlideType } from '@wrapp0r/shared';
+import type { StatSlide as StatSlideType, ColorTheme } from '@wrapp0r/shared';
 import { getIconByName } from '../../lib/icons';
 import { useCounterValue } from '../animations';
 
 interface StatSlideProps {
   slide: StatSlideType;
+  theme?: ColorTheme;
 }
 
-export function StatSlide({ slide }: StatSlideProps) {
+export function StatSlide({ slide, theme }: StatSlideProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { label, value, suffix, comparison, icon } = slide.content;

@@ -1,6 +1,6 @@
 import { Router, Request, Response, type IRouter } from 'express';
 import OpenAI from 'openai';
-import { GenerateRequestSchema, WrappedSchema, isReasoningModel, getModelConfig } from '@wrapp0r/shared';
+import { GenerateRequestSchema, WrappedSchema, isReasoningModel, getModelConfig, getCategoryTheme } from '@wrapp0r/shared';
 import { buildWrappedPrompt } from '../services/prompt-builder.js';
 
 const router: IRouter = Router();
@@ -166,6 +166,40 @@ router.post('/generate', async (req: Request, res: Response) => {
         sendEvent({ type: 'error', message: 'Failed to parse AI response as JSON' });
         res.end();
         return;
+      }
+
+      // Override theme for known categories with predefined brand themes
+      const categoryTheme = getCategoryTheme(dataCategory);
+      if (categoryTheme && parsed && typeof parsed === 'object') {
+        const parsedObj = parsed as Record<string, unknown>;
+
+        // Override theme colors
+        parsedObj.theme = {
+          primary: categoryTheme.primary,
+          secondary: categoryTheme.secondary,
+          accent: categoryTheme.accent,
+          background: categoryTheme.background,
+          text: categoryTheme.text,
+        };
+
+        // Also inject chart colors into chart slides for consistency
+        const slides = parsedObj.slides as Array<Record<string, unknown>> | undefined;
+        if (slides && Array.isArray(slides)) {
+          for (const slide of slides) {
+            if (slide.type === 'chart' && slide.content && typeof slide.content === 'object') {
+              const content = slide.content as Record<string, unknown>;
+              const data = content.data as Array<Record<string, unknown>> | undefined;
+              if (data && Array.isArray(data)) {
+                // Apply category chart colors to data items
+                data.forEach((item, index) => {
+                  if (!item.color) {
+                    item.color = categoryTheme.chart.colors[index % categoryTheme.chart.colors.length];
+                  }
+                });
+              }
+            }
+          }
+        }
       }
 
       // Validate against schema

@@ -1,12 +1,13 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
-import type { ListSlide as ListSlideType } from '@wrapp0r/shared';
+import type { ListSlide as ListSlideType, ColorTheme } from '@wrapp0r/shared';
 import { useEasedProgress, useStaggeredProgress } from '../animations';
 
 interface ListSlideProps {
   slide: ListSlideType;
+  theme?: ColorTheme;
 }
 
-export function ListSlide({ slide }: ListSlideProps) {
+export function ListSlide({ slide, theme }: ListSlideProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { title, subtitle, items, layout } = slide.content;

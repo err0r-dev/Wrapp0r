@@ -12,7 +12,7 @@ import {
   Smartphone,
   Square,
 } from 'lucide-react';
-import type { WrappedExperience } from '@wrapp0r/shared';
+import type { WrappedExperience, ColorTheme } from '@wrapp0r/shared';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useVideoExport, formatTimeRemaining } from '@/hooks/useVideoExport';
@@ -25,9 +25,10 @@ interface VideoExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentAudioUrl?: string;
+  currentTheme?: ColorTheme;
 }
 
-export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl }: VideoExportModalProps) {
+export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl, currentTheme }: VideoExportModalProps) {
   const [selectedPreset, setSelectedPreset] = useState<ExportPreset>(defaultPreset);
 
   const { status, progress, progressMessage, estimatedTimeRemaining, error, exportVideo, reset } = useVideoExport();
@@ -41,14 +42,19 @@ export function VideoExportModal({ wrapped, isOpen, onClose, currentAudioUrl }: 
 
   // Start export
   const handleExport = useCallback(() => {
-    exportVideo(wrapped, {
+    // Use current theme if provided, otherwise fall back to wrapped's original theme
+    const wrappedWithTheme: WrappedExperience = currentTheme
+      ? { ...wrapped, theme: currentTheme }
+      : wrapped;
+
+    exportVideo(wrappedWithTheme, {
       jamendoClientId: settings.pixabayApiKey,
       audioUrl: currentAudioUrl,
       width: selectedPreset.width,
       height: selectedPreset.height,
       fps: selectedPreset.fps,
     });
-  }, [exportVideo, wrapped, settings.pixabayApiKey, currentAudioUrl, selectedPreset]);
+  }, [exportVideo, wrapped, currentTheme, settings.pixabayApiKey, currentAudioUrl, selectedPreset]);
 
   // Reset to default preset when modal opens
   useEffect(() => {

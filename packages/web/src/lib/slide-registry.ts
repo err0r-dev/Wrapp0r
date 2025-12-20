@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import type { Slide, SlideType } from '@wrapp0r/shared';
+import type { Slide, SlideType, ColorTheme } from '@wrapp0r/shared';
 import { TitleSlide } from '@/components/wrapped/slides/TitleSlide';
 import { StatSlide } from '@/components/wrapped/slides/StatSlide';
 import { ChartSlide } from '@/components/wrapped/slides/ChartSlide';
@@ -11,6 +11,7 @@ import { SummarySlide } from '@/components/wrapped/slides/SummarySlide';
 // Type-safe registry mapping slide types to their components
 type SlideComponentProps<T extends Slide> = {
   slide: T;
+  theme?: ColorTheme;
 };
 
 type SlideComponentRegistry = {

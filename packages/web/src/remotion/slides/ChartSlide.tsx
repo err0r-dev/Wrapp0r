@@ -14,11 +14,13 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import type { ChartSlide as ChartSlideType } from '@wrapp0r/shared';
+import type { ChartSlide as ChartSlideType, ColorTheme } from '@wrapp0r/shared';
+import { CATEGORY_THEMES } from '@wrapp0r/shared';
 import { useAnimatedChartData, useEasedProgress, EASING } from '../animations';
 
 interface ChartSlideProps {
   slide: ChartSlideType;
+  theme?: ColorTheme;
 }
 
 const DEFAULT_COLORS = [
@@ -32,7 +34,7 @@ const DEFAULT_COLORS = [
   '#0088FE',
 ];
 
-export function ChartSlide({ slide }: ChartSlideProps) {
+export function ChartSlide({ slide, theme }: ChartSlideProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { title, chartType, data, showLegend } = slide.content;
@@ -40,10 +42,15 @@ export function ChartSlide({ slide }: ChartSlideProps) {
   // Title animation
   const titleProgress = useEasedProgress({ delay: 0, duration: 0.4, easing: 'easeOut' });
 
-  // Prepare data with colors
+  // Get theme-specific chart colors if theme is provided
+  const chartColors = theme
+    ? Object.values(CATEGORY_THEMES).find((t) => t.primary === theme.primary)?.chart.colors
+    : undefined;
+
+  // Prepare data with colors - prioritize: item.color > theme colors > default colors
   const baseChartData = data.map((item, index) => ({
     ...item,
-    color: item.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length],
+    color: item.color || chartColors?.[index % (chartColors?.length || 1)] || DEFAULT_COLORS[index % DEFAULT_COLORS.length],
   }));
 
   // Animate chart data values

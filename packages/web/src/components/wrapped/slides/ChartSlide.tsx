@@ -15,11 +15,12 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import type { ChartSlide as ChartSlideType } from '@wrapp0r/shared';
+import type { ChartSlide as ChartSlideType, ColorTheme } from '@wrapp0r/shared';
 import { getAnimationVariants } from '@/lib/animation-variants';
 
 interface ChartSlideProps {
   slide: ChartSlideType;
+  theme?: ColorTheme;
 }
 
 const DEFAULT_COLORS = [
@@ -33,9 +34,28 @@ const DEFAULT_COLORS = [
   '#0088FE',
 ];
 
-export function ChartSlide({ slide }: ChartSlideProps) {
+export function ChartSlide({ slide, theme }: ChartSlideProps) {
   const variants = getAnimationVariants(slide.animation);
   const { title, chartType, data, showLegend } = slide.content;
+
+  // Determine if this is a dark theme (white text = dark theme)
+  const isDarkTheme = theme?.text === '#FFFFFF';
+
+  // Theme-aware tooltip styles
+  // Light themes get light tooltips, dark themes get dark tooltips (matching the theme aesthetic)
+  const tooltipStyle = {
+    backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.85)' : 'rgba(255, 255, 255, 0.95)',
+    border: 'none',
+    borderRadius: '8px',
+    color: isDarkTheme ? '#FFFFFF' : '#1C1917',
+    padding: '8px 12px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+  };
+
+  // Theme-aware legend styles
+  const legendStyle = {
+    color: theme?.text || 'currentColor',
+  };
 
   // Prepare data with colors
   const chartData = data.map((item, index) => ({
@@ -58,15 +78,8 @@ export function ChartSlide({ slide }: ChartSlideProps) {
                 height={80}
               />
               <YAxis tick={{ fill: 'currentColor', opacity: 0.7 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                }}
-              />
-              {showLegend && <Legend />}
+              <Tooltip contentStyle={tooltipStyle} />
+              {showLegend && <Legend wrapperStyle={legendStyle} />}
               <Bar
                 dataKey="value"
                 animationDuration={1500}
@@ -93,15 +106,8 @@ export function ChartSlide({ slide }: ChartSlideProps) {
                 height={80}
               />
               <YAxis tick={{ fill: 'currentColor', opacity: 0.7 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                }}
-              />
-              {showLegend && <Legend />}
+              <Tooltip contentStyle={tooltipStyle} />
+              {showLegend && <Legend wrapperStyle={legendStyle} />}
               <Line
                 type="monotone"
                 dataKey="value"
@@ -128,15 +134,8 @@ export function ChartSlide({ slide }: ChartSlideProps) {
                 height={80}
               />
               <YAxis tick={{ fill: 'currentColor', opacity: 0.7 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                }}
-              />
-              {showLegend && <Legend />}
+              <Tooltip contentStyle={tooltipStyle} />
+              {showLegend && <Legend wrapperStyle={legendStyle} />}
               <Area
                 type="monotone"
                 dataKey="value"
@@ -175,15 +174,8 @@ export function ChartSlide({ slide }: ChartSlideProps) {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                }}
-              />
-              {showLegend && <Legend />}
+              <Tooltip contentStyle={tooltipStyle} />
+              {showLegend && <Legend wrapperStyle={legendStyle} />}
             </PieChart>
           </ResponsiveContainer>
         );
