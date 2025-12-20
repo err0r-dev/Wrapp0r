@@ -19,6 +19,7 @@ import {
   SpotlightDecoration,
   GlowDecoration,
 } from './decorations';
+import { BrandingFooter } from './BrandingFooter';
 
 export interface WrappedCompositionProps {
   wrapped: WrappedExperience;
@@ -255,6 +256,9 @@ export function WrappedComposition({ wrapped, includeAudio = true, audioSrc }: W
           }}
         />
       )}
+
+      {/* Branding footer - appears on all frames */}
+      <BrandingFooter theme={wrapped.theme} />
     </AbsoluteFill>
   );
 }
