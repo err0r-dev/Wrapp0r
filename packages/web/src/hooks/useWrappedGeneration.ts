@@ -105,7 +105,7 @@ export function useWrappedGeneration({ apiKey, model }: UseWrappedGenerationOpti
           },
           category,
           {
-            maxColumnsPerSheet: 15,
+            maxColumnsPerSheet: 200,
             includeAllSheets: true,
           }
         );
